@@ -176,11 +176,11 @@ public class World
             return;
         }
 
-        // Parse every .DDF found, merging their (hash → entity) and
-        // (hash → role) maps. The role map lets the CLP reader pick the right
-        // extension for entries in formats our content sniffer doesn't decode.
+        // Parse every .DDF found, merging the (hash → entity), (hash → role),
+        // and (mesh → texture pair) maps the CLP reader / UI need.
         var combinedNames = new Dictionary<uint, string>();
         var combinedRoles = new Dictionary<uint, DdfFile.AssetRole>();
+        var combinedPairs = new Dictionary<uint, uint>();
         foreach (var d in directoriesToScan)
         {
             foreach (var ddfPath in System.IO.Directory.EnumerateFiles(d, "*.DDF", SearchOption.TopDirectoryOnly))
@@ -197,6 +197,10 @@ public class World
                     {
                         if (!combinedRoles.ContainsKey(hash)) combinedRoles[hash] = role;
                     }
+                    foreach (var (mesh, tex) in ddf.TextureForMesh)
+                    {
+                        if (!combinedPairs.ContainsKey(mesh)) combinedPairs[mesh] = tex;
+                    }
                     // Hold onto the first parsed DDF so the WorldExplorer's SDB
                     // viewer can also display it; later DDFs are merged in too.
                     WorldDdf ??= ddf;
@@ -212,6 +216,10 @@ public class World
         if (combinedRoles.Count > 0)
         {
             clp.RoleResolver = h => combinedRoles.TryGetValue(h, out var role) ? RoleToExtension(role) : null;
+        }
+        if (combinedPairs.Count > 0)
+        {
+            clp.TexturePairResolver = h => combinedPairs.TryGetValue(h, out var tex) ? tex : (uint?)null;
         }
     }
 

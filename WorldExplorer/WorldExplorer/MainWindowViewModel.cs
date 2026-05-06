@@ -209,14 +209,33 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private static LmpFile.EntryInfo? FindSiblingTex(LmpFile lmp, string vifLabel)
     {
-        // BoS .CLP entries each hold a single asset, so a mesh's matching
-        // texture lives in a *different* slot under the same entity name.
-        // Look for any .tex whose entity-name token matches the vif's.
-        // (The legacy BGDA naming convention — same-basename .tex — is also
-        // tried first, in case this came in via an LMP rather than a CLP.)
+        // Strongest signal: ask the DDF for the specific texture hash that
+        // shares this mesh's asset record. When an entity has several variants
+        // (e.g. multiple Bottle Caps drops, each with its own mesh+texture),
+        // each variant binds the right texture to the right mesh.
+        if (lmp is ClpFile clp &&
+            clp.TexturePairResolver != null &&
+            clp.HashByLabel.TryGetValue(vifLabel, out var meshHash))
+        {
+            var paired = clp.TexturePairResolver(meshHash);
+            if (paired.HasValue)
+            {
+                foreach (var (key, info) in lmp.Directory)
+                {
+                    if (!key.EndsWith(".tex")) continue;
+                    if (clp.HashByLabel.TryGetValue(key, out var texHash) && texHash == paired.Value)
+                    {
+                        return info;
+                    }
+                }
+            }
+        }
+
+        // Legacy BGDA naming convention — same basename, .tex extension.
         var legacy = Path.GetFileNameWithoutExtension(vifLabel) + ".tex";
         if (lmp.Directory.TryGetValue(legacy, out var byBasename)) return byBasename;
 
+        // Last resort: any .tex with the same entity-name token.
         var vifEntity = ExtractEntityToken(vifLabel);
         if (vifEntity == null) return null;
         foreach (var (key, info) in lmp.Directory)

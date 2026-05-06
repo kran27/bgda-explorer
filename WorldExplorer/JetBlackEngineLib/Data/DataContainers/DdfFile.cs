@@ -48,11 +48,25 @@ public class DdfFile
     /// </summary>
     public IReadOnlyDictionary<uint, AssetRole> RoleByClpHash => _roleByClpHash;
 
+    /// <summary>
+    /// Map from a mesh's CLP hash to the texture's CLP hash that shares its
+    /// DDF record. When several DDF records all reference the same entity
+    /// (e.g. multiple "Bottle Caps" item variants), each record's mesh and
+    /// texture get bound *to each other* here, so a viewer can pick the right
+    /// texture for a specific mesh instead of guessing.
+    /// </summary>
+    public IReadOnlyDictionary<uint, uint> TextureForMesh => _textureForMesh;
+
+    /// <summary>Reverse of <see cref="TextureForMesh"/>: texture hash → mesh hash.</summary>
+    public IReadOnlyDictionary<uint, uint> MeshForTexture => _meshForTexture;
+
     public enum AssetRole { Mesh, Texture, Sound, Other }
 
     private readonly Dictionary<uint, string> _nameByClpHash = new();
     private readonly Dictionary<uint, IReadOnlyList<uint>> _siblingsByClpHash = new();
     private readonly Dictionary<uint, AssetRole> _roleByClpHash = new();
+    private readonly Dictionary<uint, uint> _textureForMesh = new();
+    private readonly Dictionary<uint, uint> _meshForTexture = new();
 
     public DdfFile(string name, byte[] data)
     {
@@ -73,6 +87,8 @@ public class DdfFile
         _nameByClpHash.Clear();
         _siblingsByClpHash.Clear();
         _roleByClpHash.Clear();
+        _textureForMesh.Clear();
+        _meshForTexture.Clear();
 
         if (FileData.Length < 16) return;
 
@@ -118,6 +134,8 @@ public class DdfFile
             }
 
             HashSet<uint>? bag = null;
+            uint meshInThisRecord = 0;
+            uint textureInThisRecord = 0;
             foreach (var (rel, role) in schema)
             {
                 var assetOff = off + rel;
@@ -143,6 +161,22 @@ public class DdfFile
                 {
                     _roleByClpHash[candidate] = role;
                 }
+
+                if (role == AssetRole.Mesh) meshInThisRecord = candidate;
+                else if (role == AssetRole.Texture) textureInThisRecord = candidate;
+            }
+
+            // Bind the mesh and texture from THIS record to each other.
+            // Distinct records describing different variants of the same
+            // entity (e.g. Bottle Caps' multiple item drops) each get their
+            // own mesh↔texture pair, instead of all colliding into a single
+            // "first match" via entity-name search.
+            if (meshInThisRecord != 0 && textureInThisRecord != 0)
+            {
+                if (!_textureForMesh.ContainsKey(meshInThisRecord))
+                    _textureForMesh[meshInThisRecord] = textureInThisRecord;
+                if (!_meshForTexture.ContainsKey(textureInThisRecord))
+                    _meshForTexture[textureInThisRecord] = meshInThisRecord;
             }
         }
 

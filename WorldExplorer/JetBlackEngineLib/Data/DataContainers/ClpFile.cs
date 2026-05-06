@@ -58,6 +58,24 @@ public class ClpFile : LmpFile
     /// </summary>
     public Func<uint, string?>? RoleResolver { get; set; }
 
+    /// <summary>
+    /// Lookup from a directory entry's filename label to the underlying CLP
+    /// hash. Used by callers that need to consult the DDF mesh↔texture pairing
+    /// for a clicked entry.
+    /// </summary>
+    public IReadOnlyDictionary<string, uint> HashByLabel => _hashByLabel;
+
+    /// <summary>
+    /// Optional resolver: given a mesh's CLP hash, return the texture's CLP
+    /// hash that DDF says pairs with it (from the same DDF asset record).
+    /// When several meshes/textures share an entity name, this picks the
+    /// correct partner instead of falling back to "any texture with the same
+    /// entity name token".
+    /// </summary>
+    public Func<uint, uint?>? TexturePairResolver { get; set; }
+
+    private readonly Dictionary<string, uint> _hashByLabel = new();
+
     public ClpFile(EngineVersion engineVersion, string name, byte[] data, int startOffset, int dataLen)
         : base(engineVersion, name, data, startOffset, dataLen)
     {
@@ -66,6 +84,7 @@ public class ClpFile : LmpFile
     public override void ReadDirectory()
     {
         Directory.Clear();
+        _hashByLabel.Clear();
 
         if (_dataLen < 24) return;
 
@@ -140,6 +159,7 @@ public class ClpFile : LmpFile
             label = $"slot{slot:D3}_{idPart}_{hash:X8}{ext}";
         }
         Directory[label] = new EntryInfo(label, start, length);
+        _hashByLabel[label] = hash;
     }
 
     private static string Sanitize(string s)
