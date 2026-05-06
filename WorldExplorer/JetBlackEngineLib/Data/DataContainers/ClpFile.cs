@@ -48,6 +48,16 @@ public class ClpFile : LmpFile
     /// </summary>
     public Func<uint, string?>? NameResolver { get; set; }
 
+    /// <summary>
+    /// Optional resolver: given a CLP entry hash, return the file extension the
+    /// DDF asset offset implies (".vif", ".tex", ".vag", or null when DDF
+    /// doesn't say). DDF position is a more authoritative type signal than
+    /// content sniffing — for example, BoS's inventory mesh format isn't
+    /// recognized by our content sniffer but DDF still tells us those slots
+    /// are meshes. When set, this overrides the sniff result.
+    /// </summary>
+    public Func<uint, string?>? RoleResolver { get; set; }
+
     public ClpFile(EngineVersion engineVersion, string name, byte[] data, int startOffset, int dataLen)
         : base(engineVersion, name, data, startOffset, dataLen)
     {
@@ -100,7 +110,11 @@ public class ClpFile : LmpFile
                 fileStart >= _startOffset + sectorSize &&
                 fileStart + size <= _startOffset + _dataLen)
             {
-                var (ext, embeddedName) = Sniff(FileData, fileStart, size);
+                var (sniffedExt, embeddedName) = Sniff(FileData, fileStart, size);
+                // Prefer the DDF-derived role over content sniffing — DDF tells
+                // us the type even when the bytes are in a format the sniffer
+                // can't decode (e.g. BoS's inventory mesh format).
+                var ext = RoleResolver?.Invoke(hash) ?? sniffedExt;
                 AddEntry(slot, hash, fileStart, size, ext, embeddedName);
             }
 

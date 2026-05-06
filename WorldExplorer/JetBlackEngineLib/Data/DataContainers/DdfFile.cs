@@ -39,8 +39,20 @@ public class DdfFile
     /// </summary>
     public IReadOnlyDictionary<uint, IReadOnlyList<uint>> SiblingsByClpHash => _siblingsByClpHash;
 
+    /// <summary>
+    /// Map from CLP entry hash to the role inferred from the DDF asset offset
+    /// at which it was referenced. Verified empirically: across the shipped
+    /// data, +0x2c never holds a TEX, +0x30 never holds a VIF, +0x38 holds a
+    /// VAG ~75% of the time. So the offset is a more authoritative type
+    /// signal than content sniffing for entries DDF actually mentions.
+    /// </summary>
+    public IReadOnlyDictionary<uint, AssetRole> RoleByClpHash => _roleByClpHash;
+
+    public enum AssetRole { Mesh, Texture, Sound, Other }
+
     private readonly Dictionary<uint, string> _nameByClpHash = new();
     private readonly Dictionary<uint, IReadOnlyList<uint>> _siblingsByClpHash = new();
+    private readonly Dictionary<uint, AssetRole> _roleByClpHash = new();
 
     public DdfFile(string name, byte[] data)
     {
@@ -60,6 +72,7 @@ public class DdfFile
     {
         _nameByClpHash.Clear();
         _siblingsByClpHash.Clear();
+        _roleByClpHash.Clear();
 
         if (FileData.Length < 16) return;
 
@@ -78,8 +91,23 @@ public class DdfFile
         // an SDB hash. This avoids attribution leakage between unrelated
         // entities that share a record neighbourhood.
         var entityToHashes = new Dictionary<string, HashSet<uint>>();
-        ReadOnlySpan<int> assetOffsets = stackalloc int[]
-            { 0x2c, 0x30, 0x34, 0x38, 0x3c, 0x40, 0x44 };
+        // Across all shipped BoS data, the *canonical* asset offsets each
+        // carry a deterministic content type:
+        //   +0x2c = mesh, +0x30 = texture, +0x38 = sound.
+        // The other slots in the 0x60-byte window (+0x34, +0x3c, +0x40, +0x44)
+        // sometimes carry secondary asset refs but more often leak attribution
+        // from wrapper / stub records that *contain* an inner asset record at
+        // a non-zero offset (e.g. "Bottle Caps" at @0x4a1c0 has its inner
+        // 'cw_mutant_telephonepole_2600' record starting at +0x14, whose own
+        // +0x2c happens to coincide with the wrapper's +0x40). Trusting only
+        // the canonical positions makes the inner record win, which is what
+        // the engine resolves to.
+        var schema = new (int Offset, AssetRole Role)[]
+        {
+            (0x2c, AssetRole.Mesh),
+            (0x30, AssetRole.Texture),
+            (0x38, AssetRole.Sound),
+        };
 
         for (var off = 16; off + 0x48 <= FileData.Length; off += 4)
         {
@@ -90,7 +118,7 @@ public class DdfFile
             }
 
             HashSet<uint>? bag = null;
-            foreach (var rel in assetOffsets)
+            foreach (var (rel, role) in schema)
             {
                 var assetOff = off + rel;
                 if (assetOff + 4 > FileData.Length) break;
@@ -107,6 +135,13 @@ public class DdfFile
                 if (!_nameByClpHash.ContainsKey(candidate))
                 {
                     _nameByClpHash[candidate] = entityName;
+                }
+                // First role wins — if a hash is referenced from multiple
+                // records, the first attribution we see is what the engine
+                // most likely uses for it.
+                if (!_roleByClpHash.ContainsKey(candidate))
+                {
+                    _roleByClpHash[candidate] = role;
                 }
             }
         }

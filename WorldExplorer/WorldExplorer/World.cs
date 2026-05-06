@@ -176,8 +176,11 @@ public class World
             return;
         }
 
-        // Parse every .DDF found, merging their (hash → entity) maps.
+        // Parse every .DDF found, merging their (hash → entity) and
+        // (hash → role) maps. The role map lets the CLP reader pick the right
+        // extension for entries in formats our content sniffer doesn't decode.
         var combinedNames = new Dictionary<uint, string>();
+        var combinedRoles = new Dictionary<uint, DdfFile.AssetRole>();
         foreach (var d in directoriesToScan)
         {
             foreach (var ddfPath in System.IO.Directory.EnumerateFiles(d, "*.DDF", SearchOption.TopDirectoryOnly))
@@ -189,6 +192,10 @@ public class World
                     foreach (var (hash, name) in ddf.NameByClpHash)
                     {
                         if (!combinedNames.ContainsKey(hash)) combinedNames[hash] = name;
+                    }
+                    foreach (var (hash, role) in ddf.RoleByClpHash)
+                    {
+                        if (!combinedRoles.ContainsKey(hash)) combinedRoles[hash] = role;
                     }
                     // Hold onto the first parsed DDF so the WorldExplorer's SDB
                     // viewer can also display it; later DDFs are merged in too.
@@ -202,7 +209,19 @@ public class World
         {
             clp.NameResolver = h => combinedNames.TryGetValue(h, out var name) ? name : null;
         }
+        if (combinedRoles.Count > 0)
+        {
+            clp.RoleResolver = h => combinedRoles.TryGetValue(h, out var role) ? RoleToExtension(role) : null;
+        }
     }
+
+    private static string? RoleToExtension(DdfFile.AssetRole role) => role switch
+    {
+        DdfFile.AssetRole.Mesh => ".vif",
+        DdfFile.AssetRole.Texture => ".tex",
+        DdfFile.AssetRole.Sound => ".vag",
+        _ => null, // let the sniffer decide
+    };
 
     private static void CollectHashes(byte[] data, HashSet<uint> sink)
     {
