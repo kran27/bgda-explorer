@@ -50,6 +50,10 @@ public class WorldTreeViewModel : TreeViewItemViewModel
         {
             Children.Add(new HdrDatTreeViewModel(this, _world.HdrDatFile));
         }
+        else if (_world.WorldSdb != null)
+        {
+            Children.Add(new SdbTreeViewModel(this, _world.WorldSdb));
+        }
         else
         {
             throw new NotSupportedException("Unknown or corrupted file");

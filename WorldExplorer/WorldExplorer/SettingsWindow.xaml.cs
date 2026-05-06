@@ -28,6 +28,10 @@ public partial class SettingsWindow : Window
         {
             Content = "Justice League Heroes", DataContext = EngineVersion.JusticeLeagueHeroes
         });
+        engineVersionBox.Items.Add(new ComboBoxItem
+        {
+            Content = "Fallout: Brotherhood of Steel", DataContext = EngineVersion.BrotherhoodOfSteel
+        });
 
         // Select the correct item
         var engineVersion = App.Settings.Get<EngineVersion>("Core.EngineVersion");

@@ -18,10 +18,10 @@ namespace JetBlackEngineLib.Data.DataContainers;
 
 public class LmpFile
 {
-    private readonly int _dataLen;
+    protected readonly int _dataLen;
     private readonly EngineVersion _engineVersion;
 
-    private readonly int _startOffset;
+    protected readonly int _startOffset;
 
     /// <summary>
     /// A directory of embedded files where the file names are the keys.
@@ -47,7 +47,7 @@ public class LmpFile
         _dataLen = dataLen;
     }
 
-    public void ReadDirectory()
+    public virtual void ReadDirectory()
     {
         DataReader reader = new(FileData, _startOffset, _dataLen);
         var numEntries = reader.ReadInt32();

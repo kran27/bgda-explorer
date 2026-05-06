@@ -24,6 +24,7 @@ using JetBlackEngineLib.Data.Textures;
 using JetBlackEngineLib.Data.World;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -128,6 +129,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
             {
                 OnHdrDatChildElementSelected((HdrDatChildTreeViewItem)_selectedNode);
             }
+            else if (_selectedNode is SdbTreeViewModel sdbNode)
+            {
+                OnSdbSelected(sdbNode);
+            }
 
             OnPropertyChanged(nameof(SelectedNode));
         }
@@ -190,6 +195,139 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         var ext = (Path.GetExtension(lmpEntry.Label) ?? "").ToLower();
 
+        try
+        {
+            DispatchLmpEntry(lmpFile, entry, lmpEntry, ext);
+        }
+        catch (Exception ex)
+        {
+            LogText = $"Failed to decode {lmpEntry.Label} as {ext}: {ex.GetType().Name}: {ex.Message}\n\n"
+                      + HexDump(lmpFile.FileData, entry.StartOffset, Math.Min(entry.Length, 256));
+            MainWindow.tabControl.SelectedIndex = 4; // Log View
+        }
+    }
+
+    private static LmpFile.EntryInfo? FindSiblingTex(LmpFile lmp, string vifLabel)
+    {
+        // BoS .CLP entries each hold a single asset, so a mesh's matching
+        // texture lives in a *different* slot under the same entity name.
+        // Look for any .tex whose entity-name token matches the vif's.
+        // (The legacy BGDA naming convention — same-basename .tex — is also
+        // tried first, in case this came in via an LMP rather than a CLP.)
+        var legacy = Path.GetFileNameWithoutExtension(vifLabel) + ".tex";
+        if (lmp.Directory.TryGetValue(legacy, out var byBasename)) return byBasename;
+
+        var vifEntity = ExtractEntityToken(vifLabel);
+        if (vifEntity == null) return null;
+        foreach (var (key, info) in lmp.Directory)
+        {
+            if (!key.EndsWith(".tex")) continue;
+            if (ExtractEntityToken(key) == vifEntity) return info;
+        }
+        return null;
+    }
+
+    private static string? ExtractEntityToken(string label)
+    {
+        // Labels are "slotNNN_<entity>.<ext>" (the entity may contain '_').
+        var dot = label.LastIndexOf('.');
+        var trimmed = dot > 0 ? label.Substring(0, dot) : label;
+        var firstUnderscore = trimmed.IndexOf('_');
+        if (firstUnderscore < 0 || firstUnderscore + 1 >= trimmed.Length) return null;
+        return trimmed.Substring(firstUnderscore + 1);
+    }
+
+    private void OnSdbSelected(SdbTreeViewModel node)
+    {
+        var sdb = node.SdbFile;
+        var sb = new StringBuilder();
+        sb.AppendFormat("{0}\nString database — {1} records.\n", sdb.Name, sdb.Records.Count);
+        sb.AppendLine("Note: SDB hashes do NOT match .CLP entry hashes; this is a separate");
+        sb.AppendLine("hash space for in-game item / dialogue strings, not a CLP filename map.");
+        sb.AppendLine("The hash function used to derive the upper 24 bits of each record is");
+        sb.AppendLine("not yet identified.");
+        sb.AppendLine();
+        sb.AppendLine("  slot   stored hash   string");
+        sb.AppendLine("  -----  -----------   ------------------------------------------------");
+        foreach (var rec in sdb.Records)
+        {
+            var preview = rec.Text ?? "<missing string>";
+            if (preview.Length > 96) preview = preview.Substring(0, 93) + "...";
+            // Strip newlines for table layout.
+            preview = preview.Replace('\r', ' ').Replace('\n', ' ');
+            sb.AppendFormat("  {0,5}  0x{1:X8}    {2}\n", rec.Slot, rec.Hash, preview);
+        }
+        LogText = sb.ToString();
+        MainWindow.tabControl.SelectedIndex = 4; // Log View
+    }
+
+    private static string DescribeVag(string label, byte[] data, int offset, int length)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(label);
+        if (length < 0x40)
+        {
+            sb.AppendLine("VAG file is too short to read header.");
+            return sb.ToString();
+        }
+        // VAG header is big-endian.
+        var version = (data[offset + 4] << 24) | (data[offset + 5] << 16) | (data[offset + 6] << 8) | data[offset + 7];
+        var dataSize = (data[offset + 0xC] << 24) | (data[offset + 0xD] << 16) | (data[offset + 0xE] << 8) | data[offset + 0xF];
+        var sampleRate = (data[offset + 0x10] << 24) | (data[offset + 0x11] << 16) | (data[offset + 0x12] << 8) | data[offset + 0x13];
+        var name = new StringBuilder();
+        for (var i = 0; i < 16 && data[offset + 0x20 + i] != 0; i++) name.Append((char)data[offset + 0x20 + i]);
+        sb.AppendFormat("VAG (PS2 ADPCM audio)\n");
+        sb.AppendFormat("  Internal name: {0}\n", name);
+        sb.AppendFormat("  Version:       0x{0:X8}\n", version);
+        sb.AppendFormat("  Sample rate:   {0} Hz\n", sampleRate);
+        sb.AppendFormat("  Data size:     {0} bytes ({1:F1} KB)\n", dataSize, dataSize / 1024.0);
+        sb.AppendFormat("  File size:     {0} bytes\n", length);
+        return sb.ToString();
+    }
+
+    private static string DescribeNameTable(string label, byte[] data, int offset, int length)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(label);
+        sb.AppendFormat("32-byte name table, {0} records\n\n", length / 32);
+        for (var i = 0; i < length; i += 32)
+        {
+            var name = new StringBuilder();
+            for (var j = 0; j < 32 && i + j < length; j++)
+            {
+                var b = data[offset + i + j];
+                if (b == 0) break;
+                name.Append(b >= 0x20 && b < 0x7f ? (char)b : '.');
+            }
+            if (name.Length == 0) continue;
+            sb.AppendFormat("  {0:D4}: {1}\n", i / 32, name);
+        }
+        return sb.ToString();
+    }
+
+    private static string HexDump(byte[] data, int offset, int length)
+    {
+        var sb = new StringBuilder();
+        for (var i = 0; i < length; i += 16)
+        {
+            sb.AppendFormat("{0:X8}: ", offset + i);
+            for (var j = 0; j < 16 && i + j < length; j++)
+            {
+                sb.AppendFormat("{0:X2} ", data[offset + i + j]);
+            }
+            sb.Append(' ');
+            for (var j = 0; j < 16 && i + j < length; j++)
+            {
+                var b = data[offset + i + j];
+                sb.Append(b >= 32 && b < 127 ? (char)b : '.');
+            }
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+
+    private void DispatchLmpEntry(LmpFile lmpFile, LmpFile.EntryInfo entry, LmpEntryTreeViewModel lmpEntry, string ext)
+    {
         switch (ext)
         {
             case ".tex":
@@ -202,18 +340,38 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 break;
             case ".vif":
             {
+                // Try multiple pairing strategies in order:
+                //   1. BGDA naming convention: same basename, .tex extension
+                //   2. BoS / DDF: a sibling entry whose name shares the slotNNN
+                //      prefix (the ScanSubFiles output for a single CLP entry
+                //      labels its parts slotNNN_p0, slotNNN_p1, …)
+                //   3. Same-prefix entry (entity name) elsewhere in the archive
+                LmpFile.EntryInfo? pairedTex = null;
                 var texFilename = Path.GetFileNameWithoutExtension(lmpEntry.Label) + ".tex";
-                var texEntry = lmpFile.Directory[texFilename];
-                SelectedNodeImage =
-                    TexDecoder.Decode(lmpFile.FileData.AsSpan().Slice(texEntry.StartOffset, texEntry.Length));
+                if (lmpFile.Directory.TryGetValue(texFilename, out var ent))
+                {
+                    pairedTex = ent;
+                }
+                else
+                {
+                    pairedTex = FindSiblingTex(lmpFile, lmpEntry.Label);
+                }
+                SelectedNodeImage = pairedTex != null
+                    ? TexDecoder.Decode(lmpFile.FileData.AsSpan().Slice(pairedTex.StartOffset, pairedTex.Length))
+                    : null;
                 StringLogger log = new();
                 _modelViewModel.Texture = SelectedNodeImage;
                 _modelViewModel.AnimData = null;
+                // VifDecoder divides UV coords by (textureDim * 16). With dim 0 we
+                // get NaN UVs and WPF silently drops the geometry. Substitute 256
+                // so UVs are finite when there is no paired texture; the Model
+                // viewer falls back to a checkerboard brush in that case.
+                var uvW = SelectedNodeImage?.PixelWidth ?? 256;
+                var uvH = SelectedNodeImage?.PixelHeight ?? 256;
                 Model model = new(VifDecoder.Decode(
                     log,
                     lmpFile.FileData.AsSpan().Slice(entry.StartOffset, entry.Length),
-                    SelectedNodeImage?.PixelWidth ?? 0,
-                    SelectedNodeImage?.PixelHeight ?? 0));
+                    uvW, uvH));
                 _modelViewModel.VifModel = model;
 
                 /*// Load animation data
@@ -324,6 +482,24 @@ public class MainWindowViewModel : INotifyPropertyChanged
             }
                 MainWindow.tabControl.SelectedIndex = 4; // Log View
 
+                break;
+            case ".vag":
+                LogText = DescribeVag(lmpEntry.Label, lmpFile.FileData, entry.StartOffset, entry.Length);
+                MainWindow.tabControl.SelectedIndex = 4; // Log View
+                break;
+            case ".names":
+                LogText = DescribeNameTable(lmpEntry.Label, lmpFile.FileData, entry.StartOffset, entry.Length);
+                MainWindow.tabControl.SelectedIndex = 4; // Log View
+                break;
+            case ".adpcm":
+                LogText = $"{lmpEntry.Label}\nRaw PS2 ADPCM stream (header-less VAG body).\n  {entry.Length} bytes = {entry.Length / 16} frames = {entry.Length * 28 / 16} samples\n\n"
+                          + HexDump(lmpFile.FileData, entry.StartOffset, Math.Min(entry.Length, 128));
+                MainWindow.tabControl.SelectedIndex = 4; // Log View
+                break;
+            default:
+                LogText = $"{lmpEntry.Label}\nNo decoder for extension '{ext}'. First {Math.Min(entry.Length, 256)} bytes:\n\n"
+                          + HexDump(lmpFile.FileData, entry.StartOffset, Math.Min(entry.Length, 256));
+                MainWindow.tabControl.SelectedIndex = 4; // Log View
                 break;
         }
     }

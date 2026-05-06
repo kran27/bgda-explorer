@@ -4,5 +4,6 @@ public enum EngineVersion
 {
     DarkAlliance,
     ReturnToArms,
-    JusticeLeagueHeroes
+    JusticeLeagueHeroes,
+    BrotherhoodOfSteel
 }
