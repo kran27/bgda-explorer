@@ -17,6 +17,7 @@
 using JetBlackEngineLib.Data.Animation;
 using System;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 
 namespace WorldExplorer;
 
@@ -35,12 +36,18 @@ public class SkeletonViewModel : BaseViewModel
 
     private Model3D? _model;
 
+    private readonly DispatcherTimer _playTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
+    private bool _isPlaying;
+
     public AnimData? AnimData
     {
         get => _animData;
         set
         {
             _animData = value;
+            // Stop playback when the clip changes — otherwise the timer keeps
+            // advancing into the new clip's frame range from a stale index.
+            IsPlaying = false;
             CurrentFrame = 0;
             UpdateModel();
             OnPropertyChanged("AnimData");
@@ -99,7 +106,31 @@ public class SkeletonViewModel : BaseViewModel
 
     public SkeletonViewModel(MainWindowViewModel mainViewWindow) : base(mainViewWindow)
     {
+        _playTimer.Tick += (_, _) =>
+        {
+            var max = MaximumFrame;
+            if (max <= 0) { IsPlaying = false; return; }
+            CurrentFrame = (CurrentFrame + 1) % (max + 1);
+        };
     }
+
+    /// <summary>Animation playback state. Setting it stops/starts the tick timer.</summary>
+    public bool IsPlaying
+    {
+        get => _isPlaying;
+        set
+        {
+            if (_isPlaying == value) return;
+            _isPlaying = value;
+            if (_isPlaying) _playTimer.Start(); else _playTimer.Stop();
+            OnPropertyChanged(nameof(IsPlaying));
+            OnPropertyChanged(nameof(PlayButtonLabel));
+        }
+    }
+
+    public string PlayButtonLabel => _isPlaying ? "Pause" : "Play";
+
+    public void TogglePlay() => IsPlaying = !_isPlaying;
 
     private void UpdateModel()
     {

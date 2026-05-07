@@ -83,6 +83,15 @@ public class DdfFile
         /// <summary>Type 3 — sound (.vag, custom SFX, ADPCM).</summary>
         Sound,
         /// <summary>
+        /// Type 4 — animation clip (.anm). In this engine animations are
+        /// self-contained: each .anm carries its own SkeletonDef, BindingPose,
+        /// and NumBones, so there's no separate skeleton asset. Type-4
+        /// references appear only at deep offsets inside cat-0 (character)
+        /// records — 68 anim slots per body part starting at +0x218. None
+        /// appear in the main +0x30 asset array of any category.
+        /// </summary>
+        Animation,
+        /// <summary>
         /// Types 5–7 — vestigial cat-8 subsystem slots. The engine has
         /// post-load handlers for them (sub_1A8E88 for type 5, sub_195E78 for
         /// type 7) but every type-5/6/7 hash in shipped DDFs resolves to
@@ -300,6 +309,27 @@ public class DdfFile
                 entity.Assets.Add(new EntityAsset(slotValue, role, paired));
             }
 
+            // Cat 0 (characters) has additional asset references at deep
+            // offsets that the main +0x30 walk doesn't touch. Engine resolver
+            // sub_6B170 walks them in this order:
+            //   17 type-3 (sound) slots in four groups: 5@+0x17C, 5@+0x190,
+            //                                           5@+0x1A4, 2@+0x1B8
+            //   then per-body-part records of 71 u32s starting at +0x218,
+            //   each containing 68 type-4 (animation) entries followed by
+            //   3 trailing u32s. Body-part count is at +0x160. Because each
+            //   body part is 284 bytes (71 × 4), max-size cat-0 records
+            //   (~2808 bytes) hold ~8 body parts × 68 anims = 544 anim refs.
+            //
+            // We don't replicate the engine's flag-bit guard at +0x08 — it
+            // gates whether body parts get *loaded*, not whether they
+            // *exist*. We just sanity-check the body-part count and trust
+            // knownClpHashes.Contains() to filter out garbage if a record
+            // turns out to be a stub.
+            if (category == 0)
+            {
+                WalkCat0DeepReferences(recordOffset, entity, knownClpHashes, entityHash, entityToHashes);
+            }
+
             // Add the entity even when it has no assets — cats 5/9/10/11 are
             // parameter-only records (particle emitters, AI behaviors, lights,
             // beam effects) that don't reference any CLP entries but are still
@@ -315,8 +345,54 @@ public class DdfFile
         1 => AssetRole.Mesh,
         2 => AssetRole.Texture,
         3 => AssetRole.Sound,
+        4 => AssetRole.Animation,
         _ => AssetRole.Other,
     };
+
+    private void WalkCat0DeepReferences(int recordOffset, EntityRecord entity,
+        IReadOnlySet<uint> knownClpHashes, uint entityHash,
+        Dictionary<uint, HashSet<uint>> entityToHashes)
+    {
+        // Four sound blocks the engine walks unconditionally with type code 3.
+        var soundBlocks = new (int byteOff, int count)[]
+        {
+            (0x17C, 5), (0x190, 5), (0x1A4, 5), (0x1B8, 2),
+        };
+        foreach (var (byteOff, count) in soundBlocks)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var p = recordOffset + byteOff + i * 4;
+                if (p + 4 > FileData.Length) break;
+                var v = BitConverter.ToUInt32(FileData, p);
+                if (v == 0 || !knownClpHashes.Contains(v)) continue;
+                Attribute(v, AssetRole.Sound, entityHash, entity, entityToHashes);
+                entity.Assets.Add(new EntityAsset(v, AssetRole.Sound, null));
+            }
+        }
+
+        // Body-part records: 71 u32s each (284 bytes), starting at +0x218,
+        // first 68 u32s of each are type-4 animation refs.
+        const int BodyPartByteOff = 0x218;
+        const int BodyPartStrideBytes = 71 * 4; // 284
+        const int AnimsPerBodyPart = 68;
+        if (recordOffset + 0x164 > FileData.Length) return;
+        var bodyPartCount = (int)BitConverter.ToUInt32(FileData, recordOffset + 0x160);
+        if (bodyPartCount <= 0 || bodyPartCount > 32) return; // sanity bound
+
+        for (var bp = 0; bp < bodyPartCount; bp++)
+        {
+            var bpStart = recordOffset + BodyPartByteOff + bp * BodyPartStrideBytes;
+            if (bpStart + AnimsPerBodyPart * 4 > FileData.Length) break;
+            for (var anim = 0; anim < AnimsPerBodyPart; anim++)
+            {
+                var v = BitConverter.ToUInt32(FileData, bpStart + anim * 4);
+                if (v == 0 || !knownClpHashes.Contains(v)) continue;
+                Attribute(v, AssetRole.Animation, entityHash, entity, entityToHashes);
+                entity.Assets.Add(new EntityAsset(v, AssetRole.Animation, null));
+            }
+        }
+    }
 
     private void Attribute(uint clpHash, AssetRole role, uint entityHash, EntityRecord entity,
         Dictionary<uint, HashSet<uint>> entityToHashes)

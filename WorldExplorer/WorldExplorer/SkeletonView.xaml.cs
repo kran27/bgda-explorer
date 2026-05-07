@@ -14,6 +14,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System.Windows;
 using System.Windows.Controls;
 
 namespace WorldExplorer;
@@ -26,5 +27,10 @@ public partial class SkeletonView : UserControl
     public SkeletonView()
     {
         InitializeComponent();
+    }
+
+    private void playButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is SkeletonViewModel vm) vm.TogglePlay();
     }
 }

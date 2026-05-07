@@ -55,4 +55,9 @@ public partial class ModelView
             vm.VifModel = vm.VifModel;
         }
     }
+
+    private void playButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ModelViewModel vm) vm.TogglePlay();
+    }
 }

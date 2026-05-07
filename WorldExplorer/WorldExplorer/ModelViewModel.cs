@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2012 Ian Brown
+/*  Copyright (C) 2012 Ian Brown
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,18 +52,44 @@ public class ModelViewModel : BaseViewModel
 
     private Model? _vifModel;
 
+    private readonly System.Windows.Threading.DispatcherTimer _playTimer = new()
+        { Interval = TimeSpan.FromMilliseconds(16.66f) };
+    private bool _isPlaying;
+
     public AnimData? AnimData
     {
         get => _animData;
         set
         {
             _animData = value;
+            // Stop playback whenever the clip changes — otherwise the timer
+            // would keep advancing into the new clip's frame range from a
+            // stale index.
+            IsPlaying = false;
             CurrentFrame = 0;
             UpdateModel(false);
             OnPropertyChanged(nameof(AnimData));
             OnPropertyChanged(nameof(MaximumFrame));
         }
     }
+
+    /// <summary>Animation playback state. Setting it starts/stops the tick timer.</summary>
+    public bool IsPlaying
+    {
+        get => _isPlaying;
+        set
+        {
+            if (_isPlaying == value) return;
+            _isPlaying = value;
+            if (_isPlaying) _playTimer.Start(); else _playTimer.Stop();
+            OnPropertyChanged(nameof(IsPlaying));
+            OnPropertyChanged(nameof(PlayButtonLabel));
+        }
+    }
+
+    public string PlayButtonLabel => _isPlaying ? "Pause" : "Play";
+
+    public void TogglePlay() => IsPlaying = !_isPlaying;
 
     public WriteableBitmap? Texture { get; set; }
 
@@ -171,6 +197,12 @@ public class ModelViewModel : BaseViewModel
     public ModelViewModel(MainWindowViewModel mainViewWindow) : base(mainViewWindow)
     {
         _modelView = MainViewModel.MainWindow.modelView;
+        _playTimer.Tick += (_, _) =>
+        {
+            var max = MaximumFrame;
+            if (max <= 0) { IsPlaying = false; return; }
+            CurrentFrame = (CurrentFrame + 1) % (max + 1);
+        };
     }
 
     /// <summary>

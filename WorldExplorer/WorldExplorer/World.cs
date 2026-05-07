@@ -261,6 +261,7 @@ public class World
         DdfFile.AssetRole.Mesh => ".vif",
         DdfFile.AssetRole.Texture => ".tex",
         DdfFile.AssetRole.Sound => ".vag",
+        DdfFile.AssetRole.Animation => ".anm",
         _ => null,
     };
 

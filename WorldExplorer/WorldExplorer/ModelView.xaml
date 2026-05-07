@@ -8,6 +8,7 @@
              d:DesignHeight="300" d:DesignWidth="300" DataContext="{Binding}">
     <Grid>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
@@ -16,9 +17,12 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Slider Name="frameSlider" Minimum="-1" Maximum="{Binding MaximumFrame}" Value="{Binding CurrentFrame}" />
-        <Label Grid.Column="1" Content="{Binding CurrentFrame}" />
-        <Border Grid.Row="1" Grid.ColumnSpan="2" Background="Transparent" Name="trackballSource">
+        <Button Grid.Column="0" Name="playButton" Content="{Binding PlayButtonLabel}"
+                Click="playButton_Click" Padding="8,2" MinWidth="80" />
+        <Slider Grid.Column="1" Name="frameSlider" Minimum="-1" Maximum="{Binding MaximumFrame}"
+                Value="{Binding CurrentFrame}" VerticalAlignment="Center" />
+        <Label Grid.Column="2" Content="{Binding CurrentFrame}" />
+        <Border Grid.Row="1" Grid.ColumnSpan="3" Background="Transparent" Name="trackballSource">
             <hvd:HelixViewport3D ClipToBounds="True" Name="viewport" IsChangeFieldOfViewEnabled="False"
                                  ShowViewCube="False" ShowCoordinateSystem="True">
                 <hvd:SunLight />
@@ -26,7 +30,7 @@
                 <ModelVisual3D x:Name="modelObject" />
             </hvd:HelixViewport3D>
         </Border>
-        <Label Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Content="{Binding InfoText}" />
+        <Label Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Content="{Binding InfoText}" />
         <Grid Grid.Row="1" VerticalAlignment="Bottom">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />

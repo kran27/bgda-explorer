@@ -1,10 +1,11 @@
-﻿using System.Windows.Media.Media3D;
+using System.Windows.Media.Media3D;
 
 namespace JetBlackEngineLib.Data.Animation;
 
 public class BdgaAnmDecoder : AnmDecoder
 {
-    private static readonly EngineVersion[] StaticSupportedVersions = {EngineVersion.DarkAlliance};
+    private static readonly EngineVersion[] StaticSupportedVersions =
+        {EngineVersion.DarkAlliance, EngineVersion.BrotherhoodOfSteel};
     public override IReadOnlyList<EngineVersion> SupportedVersions => StaticSupportedVersions;
 
     public override AnimData Decode(ReadOnlySpan<byte> data)

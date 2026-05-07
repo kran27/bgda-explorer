@@ -17,6 +17,7 @@ public abstract class AnmDecoder : IAnmDecoder
         return engineVersion switch
         {
             EngineVersion.DarkAlliance => new BdgaAnmDecoder(),
+            EngineVersion.BrotherhoodOfSteel => new BdgaAnmDecoder(),
             EngineVersion.ReturnToArms => new RtaAnmDecoder(),
             EngineVersion.JusticeLeagueHeroes => new RtaAnmDecoder(),
             _ => throw new EngineNotSupportedException(engineVersion)
