@@ -151,16 +151,25 @@ public class ClpFile : LmpFile
 
     private void AddEntry(int slot, uint hash, int start, int length, string ext, string? embeddedName)
     {
-        // Label preference: in-file embedded name (e.g. the 16-char name a
-        // VAG header carries) > raw hash. We don't use DDF entity names here
-        // because CLP entries are routinely shared across many DDF entities
-        // (Gold Ring + Wedding Ring + … all reuse the same mesh+tex), so
-        // attributing one name to the slot is misleading.
-        var idPart = embeddedName ?? $"{hash:X8}";
-        var label = $"slot{slot:D3}_{idPart}{ext}";
+        // Label preference order:
+        //   1. Original engine filename, if it's in the BoS name table — the
+        //      extension comes baked in, so we don't append our own.
+        //   2. In-file embedded name (e.g. the 16-char name a VAG header
+        //      carries) + sniffed/role extension.
+        //   3. Raw hash + sniffed/role extension.
+        // DDF entity names aren't used as labels because CLP entries are
+        // routinely shared across many DDF entities (Gold Ring + Wedding Ring
+        // + … all reuse one mesh+tex); attributing one entity name is
+        // misleading. The engine filename, when known, is unique to the file.
+        var engineName = BosNameTable.Get(hash);
+        string label = engineName != null
+            ? $"slot{slot:D3}_{engineName}"
+            : $"slot{slot:D3}_{embeddedName ?? hash.ToString("X8")}{ext}";
         if (Directory.ContainsKey(label))
         {
-            label = $"slot{slot:D3}_{idPart}_{hash:X8}{ext}";
+            label = engineName != null
+                ? $"slot{slot:D3}_{engineName}_{hash:X8}"
+                : $"slot{slot:D3}_{embeddedName ?? hash.ToString("X8")}_{hash:X8}{ext}";
         }
         Directory[label] = new EntryInfo(label, start, length);
         _hashByLabel[label] = hash;
@@ -197,6 +206,16 @@ public class ClpFile : LmpFile
         if (LooksLikeBgda1Mesh(data, offset, length))
         {
             return (".vif", null);
+        }
+
+        // MPEG-2 video. Both .m2v (rendered cutscenes) and .smg (in-engine
+        // pre-rendered cinematics) share the same byte format — the engine
+        // distinguishes them by extension only. Sequence header start code
+        // 0x000001B3 is unambiguous.
+        if (data[offset] == 0 && data[offset + 1] == 0 &&
+            data[offset + 2] == 1 && data[offset + 3] == 0xB3)
+        {
+            return (".m2v", null);
         }
 
         // 32-byte fixed-width name table — used by BoS for sound-event manifests
