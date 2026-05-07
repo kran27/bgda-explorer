@@ -133,6 +133,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
             {
                 OnSdbSelected(sdbNode);
             }
+            else if (_selectedNode is DdfEntityTreeViewModel entityNode)
+            {
+                OnDdfEntitySelected(entityNode);
+            }
 
             OnPropertyChanged(nameof(SelectedNode));
         }
@@ -186,6 +190,31 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             LoadFile(_gobFile);
         }
+    }
+
+    /// <summary>
+    /// Selecting a DDF entity renders its mesh by routing to OnLmpEntrySelected
+    /// with the entity's mesh asset. The .vif dispatch already handles texture
+    /// pairing via TexturePairResolver, which the DDF parser populated, so the
+    /// right texture appears alongside the model with no extra work here.
+    /// When the entity has no mesh — sound-only, or its CLP isn't loaded — we
+    /// clear the viewer state so the previous entity's model doesn't linger.
+    /// </summary>
+    private void OnDdfEntitySelected(DdfEntityTreeViewModel entityNode)
+    {
+        if (World == null) return;
+        var meshAsset = entityNode.Entity.Assets.FirstOrDefault(a => a.Role == DdfFile.AssetRole.Mesh);
+        if (meshAsset != null && World.AssetIndex.TryGetValue(meshAsset.Hash, out var loc))
+        {
+            OnLmpEntrySelected(new LmpEntryTreeViewModel(World, entityNode, loc.Clp, loc.EntryLabel));
+            return;
+        }
+
+        SelectedNodeImage = null;
+        _modelViewModel.Texture = null;
+        _modelViewModel.AnimData = null;
+        _modelViewModel.VifModel = null;
+        MainWindow.SetViewportText(1, entityNode.Entity.Name + " (no model)", "");
     }
 
     private void OnLmpEntrySelected(LmpEntryTreeViewModel lmpEntry)

@@ -109,16 +109,20 @@ public class ModelViewModel : BaseViewModel
         {
             _model = value;
 
+            // Always remove the previous container; only add the new one if non-null.
+            // Without the unconditional remove, clearing the selection (Model = null)
+            // leaves the previous mesh on screen.
+            _modelView.viewport.Children.Remove(_modelView.modelObject);
             if (_model != null)
             {
                 InfoText = $"Model Bounds: {_model.Content.Bounds}";
-                _modelView.viewport.Children.Remove(_modelView.modelObject);
                 _modelView.modelObject = _model;
                 _modelView.viewport.Children.Add(_modelView.modelObject);
             }
             else
             {
                 InfoText = null;
+                _modelView.modelObject = new ModelVisual3D();
             }
 
             OnPropertyChanged(nameof(Model));
@@ -153,25 +157,28 @@ public class ModelViewModel : BaseViewModel
 
     private void UpdateModel(bool updateCamera)
     {
-        if (_vifModel != null)
+        if (_vifModel == null)
         {
-            var newModel =
-                (GeometryModel3D)Conversions.CreateModel3D(_vifModel.MeshList, Texture, _animData, CurrentFrame);
-            ModelVisual3D container = new() {Content = newModel};
+            Model = null;
+            return;
+        }
 
-            if (_modelView.normalsBox.IsChecked.GetValueOrDefault())
-            {
-                MeshNormalsVisual3D normal = new() {Mesh = (MeshGeometry3D)newModel.Geometry};
+        var newModel =
+            (GeometryModel3D)Conversions.CreateModel3D(_vifModel.MeshList, Texture, _animData, CurrentFrame);
+        ModelVisual3D container = new() {Content = newModel};
 
-                container.Children.Add(normal);
-            }
+        if (_modelView.normalsBox.IsChecked.GetValueOrDefault())
+        {
+            MeshNormalsVisual3D normal = new() {Mesh = (MeshGeometry3D)newModel.Geometry};
 
-            Model = container;
+            container.Children.Add(normal);
+        }
 
-            if (updateCamera && _model != null)
-            {
-                UpdateCamera(_model);
-            }
+        Model = container;
+
+        if (updateCamera && _model != null)
+        {
+            UpdateCamera(_model);
         }
     }
 

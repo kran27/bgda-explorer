@@ -65,11 +65,10 @@ public partial class MainWindow : Window
         switch (tabControl.SelectedIndex)
         {
             case 1:
-                modelView.viewport.SetView(new Point3D(0, -100, 0), new Vector3D(0, 100, 0), new Vector3D(0, 0, 1));
+                FrameModel(modelView.viewport, ViewModel.TheModelViewModel.VifModel);
                 break;
             case 2:
-                skeletonView.viewport.SetView(new Point3D(0, -100, 0), new Vector3D(0, 100, 0),
-                    new Vector3D(0, 0, 1));
+                FrameModel(skeletonView.viewport, ViewModel.TheModelViewModel.VifModel);
                 break;
             case 3:
                 // Attempt to get the whole world in view
@@ -78,6 +77,63 @@ public partial class MainWindow : Window
                     levelView.viewport.ZoomExtents(bounds, 1000);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Position the camera at a 3/4 angle in front of the model's centroid.
+    /// BoS character meshes (the most common subject) face -Y in world space,
+    /// so the camera sits at -Y +Z relative to centroid and looks back along
+    /// (+Y, -Z). Writes the camera properties directly so nothing else (the
+    /// model viewer's own UpdateCamera, ZoomExtents, etc.) can override it.
+    /// </summary>
+    private static void FrameModel(HelixViewport3D viewport, JetBlackEngineLib.Data.Models.Model? model)
+    {
+        if (viewport.Camera is not ProjectionCamera cam) return;
+
+        if (model == null || !TryGetModelBounds(model, out var bounds))
+        {
+            cam.Position = new Point3D(0, -100, 50);
+            cam.LookDirection = new Vector3D(0, 100, -50);
+            cam.UpDirection = new Vector3D(0, 0, 1);
+            if (cam is OrthographicCamera oc0) oc0.Width = 200;
+            return;
+        }
+
+        var cx = bounds.X + bounds.SizeX / 2;
+        var cy = bounds.Y + bounds.SizeY / 2;
+        var cz = bounds.Z + bounds.SizeZ / 2;
+        var span = Math.Max(bounds.SizeX, Math.Max(bounds.SizeY, bounds.SizeZ));
+        if (span < 1) span = 1;
+
+        var distance = span * 2.0;
+        cam.Position = new Point3D(cx, cy - distance, cz + span * 0.4);
+        cam.LookDirection = new Vector3D(0, distance, -span * 0.4);
+        cam.UpDirection = new Vector3D(0, 0, 1);
+        if (cam is OrthographicCamera oc) oc.Width = span * 1.4;
+    }
+
+    private static bool TryGetModelBounds(JetBlackEngineLib.Data.Models.Model model, out Rect3D bounds)
+    {
+        bounds = Rect3D.Empty;
+        var any = false;
+        double minX = double.PositiveInfinity, minY = double.PositiveInfinity, minZ = double.PositiveInfinity;
+        double maxX = double.NegativeInfinity, maxY = double.NegativeInfinity, maxZ = double.NegativeInfinity;
+        foreach (var mesh in model.MeshList)
+        {
+            foreach (var p in mesh.Positions)
+            {
+                any = true;
+                if (p.X < minX) minX = p.X;
+                if (p.Y < minY) minY = p.Y;
+                if (p.Z < minZ) minZ = p.Z;
+                if (p.X > maxX) maxX = p.X;
+                if (p.Y > maxY) maxY = p.Y;
+                if (p.Z > maxZ) maxZ = p.Z;
+            }
+        }
+        if (!any) return false;
+        bounds = new Rect3D(minX, minY, minZ, maxX - minX, maxY - minY, maxZ - minZ);
+        return true;
     }
 
     public void SetViewportText(int index, string title, string subTitle)
