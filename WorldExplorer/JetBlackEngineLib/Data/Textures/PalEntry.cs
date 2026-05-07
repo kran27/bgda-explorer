@@ -26,23 +26,16 @@ public class PalEntry
 
     public int Argb()
     {
-        // Note to reviewers: I have no memory of this place
-
-        // in ps2 0x80 is fully transparent and 0 is opaque.
-        // in java 0 is transparent and 0xFF is opaque.
-
-        var convertedAlpha = (byte)(256 - (byte)(A * 2));
-
-        var javaA = A == 0 ? 255 : (byte)(256 - (byte)(A * 2));
-
-        //if (convertedAlpha < TransparentThreshold)
-        {
-            convertedAlpha = (byte)(255 - A);
-        }
-
-
-        //java_a = (byte)0xFF;
-
+        // Binary alpha: A == 0 is the colorkey (transparent), everything
+        // else renders fully opaque. This is wrong for character textures
+        // whose cutouts use low-but-non-zero alpha values (those render as
+        // their RGB color — typically black — rather than being discarded),
+        // but bumping the threshold higher misclassifies world/level
+        // palettes whose alphas span 0x01..0x80 uniformly: "transparent
+        // characters" → "invisible levels". A proper fix needs per-texture
+        // alpha-mode dispatch keyed on the TEX header marker byte
+        // (0xC2/0xC4 vs 0xC6) — not yet implemented.
+        var convertedAlpha = (byte)(A == 0 ? 0 : 0xFF);
         var argb = (convertedAlpha << 24) |
                    ((R << 16) & 0xFF0000) |
                    ((G << 8) & 0xFF00) |

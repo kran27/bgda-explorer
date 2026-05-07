@@ -1,20 +1,24 @@
-﻿using System.Windows.Media.Imaging;
+using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 
 namespace JetBlackEngineLib.Data.World;
 
-public class WorldFileV1Decoder : WorldFileDecoder
+/// <summary>
+/// BoS-specific world decoder. Same global header layout as BGDA1 but the
+/// per-element struct is <see cref="WorldV1BoSElement"/> at 80 bytes 
+/// instead of BGDA's 56-byte <see cref="WorldV1Element"/>, plus the field
+/// positions inside the element shifted past +0x08 too.
+/// </summary>
+public class WorldFileV1BoSDecoder : WorldFileDecoder
 {
-    // BoS reuses the BGDA1 file *header* layout but the per-element struct
-    // is bigger (80 bytes vs 56). See WorldFileV1BoSDecoder for the BoS path.
     private static readonly EngineVersion[] StaticSupportedVersions =
-        {EngineVersion.DarkAlliance};
+        {EngineVersion.BrotherhoodOfSteel};
 
     public override IReadOnlyList<EngineVersion> SupportedVersions => StaticSupportedVersions;
 
     protected override IEnumerable<WorldElement> ReadElements(ReadOnlySpan<byte> data, WorldFileHeader header)
     {
-        return IterateElements<WorldV1Element>(data, header, WorldV1Element.Size, RawDataToElement);
+        return IterateElements<WorldV1BoSElement>(data, header, WorldV1BoSElement.Size, RawDataToElement);
     }
 
     protected override WriteableBitmap? GetElementTexture(WorldElementDataInfo dataInfo, WorldTexFile texFile,
@@ -31,18 +35,16 @@ public class WorldFileV1Decoder : WorldFileDecoder
         for (var x = x1; x <= x2; ++x)
         {
             var cellOffset = (((y - y1) * 100) + x - x1) * 8;
-            // This test is needed to deal with town.world in BGDA which addresses textures outside of the maximum x range.
             if (data.Length >= offset + cellOffset + 4)
             {
                 var address = DataUtil.GetLeInt(data, offset + cellOffset);
                 chunkOffsets[y, x] = address;
             }
         }
-
         return chunkOffsets;
     }
 
-    private WorldElement RawDataToElement(WorldV1Element rawEl, int elementIdx)
+    private WorldElement RawDataToElement(WorldV1BoSElement rawEl, int elementIdx)
     {
         WorldElement element = new()
         {

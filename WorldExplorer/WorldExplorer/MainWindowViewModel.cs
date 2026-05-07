@@ -211,6 +211,19 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (World == null) return;
         var entity = entityNode.Entity;
 
+        // Cat-8 (level/container) entities point at a per-level world-layout
+        // file via their Other-role asset (type-5 slot). When we can find
+        // those bytes in a loaded CLP, decode them with the BGDA1 world
+        // decoder (BoS reuses that layout) and route to the Level tab.
+        if (entity.CategoryCode == 8)
+        {
+            if (TryRenderCat8World(entity))
+            {
+                LogText = DumpEntityRecord(entity);
+                return;
+            }
+        }
+
         // Collect every Mesh asset that resolves to a loaded CLP entry.
         // Cat 12 (debris) records list 4 interchangeable mesh variants; render
         // only the first to keep the view legible — the parser already pairs
@@ -263,6 +276,118 @@ public class MainWindowViewModel : INotifyPropertyChanged
         }
 
         LogText = DumpEntityRecord(entity);
+    }
+
+    /// <summary>
+    /// Look up the BoS level texture atlas. Tries two strategies:
+    ///   1. Hash "&lt;entity_name&gt;.tex" directly — covers BAR, T_GAZ, GARDEN,
+    ///      etc. where the CLP and asset names match.
+    ///   2. Fallback: locate the sibling "&lt;entity&gt;_T.CLP" archive and pick
+    ///      its largest entry — covers cases where the CLP name is a short
+    ///      code but the asset is the full word (WARE_1 → warehouse_1.tex,
+    ///      TUTOR → tutorial.tex). The .tex is always the biggest of the 2–3
+    ///      entries in a _T.CLP (they hold .tex / .hsh / .vat where .hsh is
+    ///      always tiny and .vat is medium).
+    /// </summary>
+    private WorldTexFile? LoadBosLevelTex(string entityName)
+    {
+        if (World == null) return null;
+        var lowerName = entityName.Trim().ToLowerInvariant();
+
+        // Strategy 1: direct hash on "<lower>.tex"
+        var hash = BosNameTable.Hash(lowerName + ".tex");
+        if (World.AssetIndex.TryGetValue(hash, out var loc)
+            && loc.Clp.Directory.TryGetValue(loc.EntryLabel, out var entry))
+        {
+            var bytes = new byte[entry.Length];
+            Buffer.BlockCopy(loc.Clp.FileData, entry.StartOffset, bytes, 0, entry.Length);
+            return new WorldTexFile(World.EngineVersion, bytes, lowerName + ".tex");
+        }
+
+        // Strategy 2: find the sibling _T.CLP and pick its biggest entry
+        var siblingName = entityName.Trim().ToUpperInvariant() + "_T.CLP";
+        foreach (var clp in World.LoadedClps)
+        {
+            if (!string.Equals(clp.Name, siblingName, StringComparison.OrdinalIgnoreCase)) continue;
+            // Pick the largest entry — that's always the .tex
+            string? bestKey = null;
+            int bestSize = 0;
+            foreach (var (key, info) in clp.Directory)
+            {
+                if (info.Length > bestSize) { bestSize = info.Length; bestKey = key; }
+            }
+            if (bestKey != null)
+            {
+                var info = clp.Directory[bestKey];
+                var bytes = new byte[info.Length];
+                Buffer.BlockCopy(clp.FileData, info.StartOffset, bytes, 0, info.Length);
+                return new WorldTexFile(World.EngineVersion, bytes, bestKey);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Decode a cat-8 entity's type-5 (Other-role) asset as a BoS world file
+    /// and surface it in the Level tab. Returns false if the entity has no
+    /// usable Other reference, or its bytes don't parse — in which case the
+    /// caller falls through to the regular mesh/log path.
+    /// </summary>
+    private bool TryRenderCat8World(DdfFile.EntityRecord entity)
+    {
+        if (World == null) return false;
+        // The world-layout slot is the cat-8 type-5 reference. We attributed
+        // it as AssetRole.Other in the DDF parser. There can be multiple
+        // Other-role assets (types 5/6/7), so try each in turn.
+        foreach (var asset in entity.Assets)
+        {
+            if (asset.Role != DdfFile.AssetRole.Other) continue;
+            if (!World.AssetIndex.TryGetValue(asset.Hash, out var loc)) continue;
+            if (!loc.Clp.Directory.TryGetValue(loc.EntryLabel, out var entry)) continue;
+            try
+            {
+                var data = loc.Clp.FileData.AsSpan(entry.StartOffset, entry.Length);
+                // Quick header sanity-check before paying the parse cost: a
+                // real WorldFileHeader has a small NumberOfElements at +0
+                // and an ElementArrayStart at +0x24 inside the file.
+                if (data.Length < 0x68) continue;
+                var ne = BitConverter.ToInt32(data.Slice(0, 4));
+                var eas = BitConverter.ToInt32(data.Slice(0x24, 4));
+                var wtoo = BitConverter.ToInt32(data.Slice(0x64, 4));
+                if (ne <= 0 || ne > 8000 || eas < 100 || eas >= data.Length) continue;
+                if (wtoo < 100 || wtoo >= data.Length) continue;
+
+                WorldFileDecoder decoder = World.EngineVersion == EngineVersion.BrotherhoodOfSteel
+                    ? new WorldFileV1BoSDecoder()
+                    : new WorldFileV1Decoder();
+                // Derive the level texture atlas. Cat-8 entity names are
+                // upper-case level IDs ("BAR", "MILL_3"); the matching tex
+                // entry is "<lower>.tex" and lives in the level's _T.CLP.
+                var texFile = LoadBosLevelTex(entity.Name) ?? World.WorldTex;
+                var worldData = decoder.Decode(data, texFile);
+                World.WorldData = worldData;
+                _levelViewModel.WorldNode = null;
+                _levelViewModel.WorldData = worldData;
+
+                MainWindow.tabControl.SelectedIndex = 3; // Level View
+                MainWindow.SetViewportText(3, entity.Name, $"{worldData.WorldElements.Count} elements");
+                MainWindow.ResetCamera();
+
+                // Clear the model viewport so a previously-selected character
+                // mesh doesn't overlap visually.
+                _modelViewModel.VifModel = null;
+                _modelViewModel.Texture = null;
+                _modelViewModel.AnimData = null;
+                SelectedNodeImage = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogText = $"Cat-8 world decode failed for asset 0x{asset.Hash:X8}: {ex.GetType().Name}: {ex.Message}";
+                return false;
+            }
+        }
+        return false;
     }
 
     /// <summary>
@@ -647,6 +772,35 @@ public class MainWindowViewModel : INotifyPropertyChanged
                           + HexDump(lmpFile.FileData, entry.StartOffset, Math.Min(entry.Length, 128));
                 MainWindow.tabControl.SelectedIndex = 4; // Log View
                 break;
+            case ".world":
+            {
+                if (World == null) break;
+                var data = lmpFile.FileData.AsSpan(entry.StartOffset, entry.Length);
+                WorldFileDecoder decoder = World.EngineVersion == EngineVersion.BrotherhoodOfSteel
+                    ? new WorldFileV1BoSDecoder()
+                    : new WorldFileV1Decoder();
+                // Derive the texture atlas from the parent CLP's name. The
+                // user typically opens e.g. "BAR.CLP" — the matching atlas is
+                // "bar.tex" living in BAR_T.CLP, hashable via BosNameTable.
+                WorldTexFile? texFile = World.WorldTex;
+                if (World.EngineVersion == EngineVersion.BrotherhoodOfSteel)
+                {
+                    var levelName = Path.GetFileNameWithoutExtension(lmpFile.Name);
+                    texFile = LoadBosLevelTex(levelName) ?? texFile;
+                }
+                World.WorldData = decoder.Decode(data, texFile);
+                _levelViewModel.WorldNode = null;
+                _levelViewModel.WorldData = World.WorldData;
+                LogText = World.WorldData.ToString();
+                MainWindow.tabControl.SelectedIndex = 3; // Level View
+                MainWindow.SetViewportText(3, lmpEntry.Label, $"{World.WorldData.WorldElements.Count} elements");
+                MainWindow.ResetCamera();
+                _modelViewModel.VifModel = null;
+                _modelViewModel.Texture = null;
+                _modelViewModel.AnimData = null;
+                SelectedNodeImage = null;
+                break;
+            }
             default:
                 LogText = $"{lmpEntry.Label}\nNo decoder for extension '{ext}'. First {Math.Min(entry.Length, 256)} bytes:\n\n"
                           + HexDump(lmpFile.FileData, entry.StartOffset, Math.Min(entry.Length, 256));

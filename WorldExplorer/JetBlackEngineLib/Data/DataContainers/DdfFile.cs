@@ -92,15 +92,20 @@ public class DdfFile
         /// </summary>
         Animation,
         /// <summary>
-        /// Types 5–7 — vestigial cat-8 subsystem slots. The engine has
-        /// post-load handlers for them (sub_1A8E88 for type 5, sub_195E78 for
-        /// type 7) but every type-5/6/7 hash in shipped DDFs resolves to
-        /// nothing: 0/245 unique references match any CLP entry, and 0/245
-        /// match any SDB entity hash. Cat-8's only live asset is its slot-7
-        /// texture, which is the same 64×64 placeholder (hash 0xE897E1CA)
-        /// bundled identically into every level CLP. Treat these as cut
-        /// content — there's no extension to give them because the data
-        /// they'd be doesn't exist.
+        /// Types 5–7 — cat-8 (level/container) subsystem slots that point at
+        /// per-level files stored *in the level's own CLP archive*, not in
+        /// the shared CLPs we load by default. That's why a naive cross-
+        /// reference against the global CLP-hash union finds 0 matches.
+        ///
+        /// Confirmed: type 5 is the BGDA-shaped world layout file. Every
+        /// level CLP contains exactly one entry whose first 100 bytes score
+        /// 8/9 against <c>WorldFileHeader</c> (sane NumberOfElements,
+        /// cols/rows, ElementArrayStart, Texll/Texur, WorldTexOffsetsOffset),
+        /// and that entry's hash matches the cat-8 record's type-5 slot for
+        /// the corresponding level. Types 6 and 7 are likely sibling per-
+        /// level files (texture atlas, terrain heightmap, navmesh) — same
+        /// "lives only in the level's CLP" pattern, format not yet
+        /// identified.
         /// </summary>
         Other,
     }

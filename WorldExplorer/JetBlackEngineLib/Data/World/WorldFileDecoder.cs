@@ -72,11 +72,21 @@ public abstract class WorldFileDecoder : ISupportsSpecificEngineVersions
 
         if (texFile != null)
         {
-            element.Texture = GetElementTexture(element.DataInfo, texFile, worldData);
-            if (element.Texture != null)
+            // A single corrupt entry shouldn't abort the whole world load —
+            // we'd lose the rest of the level. Per-element textures can come
+            // and go independently, so isolate failures and keep going.
+            try
             {
-                element.DataInfo.TextureWidth = element.Texture.PixelWidth;
-                element.DataInfo.TextureHeight = element.Texture.PixelHeight;
+                element.Texture = GetElementTexture(element.DataInfo, texFile, worldData);
+                if (element.Texture != null)
+                {
+                    element.DataInfo.TextureWidth = element.Texture.PixelWidth;
+                    element.DataInfo.TextureHeight = element.Texture.PixelHeight;
+                }
+            }
+            catch (Exception)
+            {
+                element.Texture = null;
             }
         }
 
@@ -87,12 +97,20 @@ public abstract class WorldFileDecoder : ISupportsSpecificEngineVersions
 
         if (vifDataLength > 0)
         {
+            // VifDecoder divides UV coords by (textureDim * 16). With dim 0 we
+            // get NaN UVs and WPF silently drops the geometry — this is what
+            // makes a BoS level "have 425 elements but render nothing" when
+            // the texture atlas isn't loaded yet. Fall back to 256 so UVs are
+            // finite; the result paints with a checkerboard fallback brush
+            // until a real texture is wired up.
+            var uvW = element.DataInfo.TextureWidth > 0 ? element.DataInfo.TextureWidth : 256;
+            var uvH = element.DataInfo.TextureHeight > 0 ? element.DataInfo.TextureHeight : 256;
             element.Model = GetElementModel(
                 NullLogger.Instance,
                 absoluteVifStartOffset,
                 data.Slice(absoluteVifStartOffset, vifDataLength),
-                element.DataInfo.TextureWidth,
-                element.DataInfo.TextureHeight
+                uvW,
+                uvH
             );
         }
     }

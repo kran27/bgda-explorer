@@ -19,10 +19,19 @@ public class WorldTexFile
     private readonly Dictionary<int, WriteableBitmap> _texMap = new();
 
     public WorldTexFile(EngineVersion engineVersion, string filepath)
+        : this(engineVersion, File.ReadAllBytes(filepath), Path.GetFileName(filepath))
+    {
+    }
+
+    /// <summary>
+    /// In-memory ctor — used when the texture data lives inside a CLP entry
+    /// (BoS) rather than as a loose level texture file (BGDA).
+    /// </summary>
+    public WorldTexFile(EngineVersion engineVersion, byte[] data, string fileName)
     {
         EngineVersion = engineVersion;
-        FileData = File.ReadAllBytes(filepath);
-        FileName = Path.GetFileName(filepath);
+        FileData = data;
+        FileName = fileName;
 
         if (EngineVersion is EngineVersion.ReturnToArms or EngineVersion.JusticeLeagueHeroes)
         {
@@ -98,7 +107,12 @@ public class WorldTexFile
     {
         // Dark Alliance encodes pointers as offsets from the entry in the texture entry table.
         // Return to arms (more sensibly) encodes pointers as offsets from the current chunk loaded from the disc.
-        var deltaOffset = EngineVersion.DarkAlliance == EngineVersion ? offset : chunkStartOffset;
+        // BoS uses the DA convention — verified empirically: with deltaOffset=offset
+        // the palette pointer for chunk 0x5800 entry 1 of bar.tex resolves to
+        // 0x7080 (in-bounds, sane palette bytes); the chunk-relative variant
+        // resolves to 0x600B800 (way past the 5 MB tex file).
+        var deltaOffset = EngineVersion is EngineVersion.DarkAlliance or EngineVersion.BrotherhoodOfSteel
+            ? offset : chunkStartOffset;
 
         var pixelWidth = DataUtil.GetLeUShort(FileData, offset);
         var pixelHeight = DataUtil.GetLeUShort(FileData, offset + 2);

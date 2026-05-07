@@ -233,7 +233,46 @@ public class ClpFile : LmpFile
             return (".adpcm", null);
         }
 
+        // BGDA1-shape WorldFileHeader. BoS reuses the layout, and each level
+        // CLP has exactly one entry that scores cleanly: a small positive
+        // NumberOfElements at +0x00, plausible cols/rows at +0x10/+0x14, an
+        // ElementArrayStart at +0x24 inside the file, and Texll/Texur in the
+        // 4000–5400 range (formatted as row*100+col).
+        if (length >= 100 && LooksLikeWorld(data, offset, length))
+        {
+            return (".world", null);
+        }
+
         return (".dat", null);
+    }
+
+    private static bool LooksLikeWorld(byte[] data, int offset, int length)
+    {
+        // Field positions inside WorldFileHeader. Note WorldTexOffsetsOffset
+        // is at +0x64, after the Unknown96 filler at +0x60 — easy to get
+        // wrong when reading the struct definition.
+        if (length < 0x68) return false;
+        var ne    = BitConverter.ToInt32(data, offset + 0x00);
+        var cols  = BitConverter.ToInt32(data, offset + 0x10);
+        var rows  = BitConverter.ToInt32(data, offset + 0x14);
+        var eas   = BitConverter.ToInt32(data, offset + 0x24);
+        var texll = BitConverter.ToInt32(data, offset + 0x58);
+        var texur = BitConverter.ToInt32(data, offset + 0x5C);
+        var wtoo  = BitConverter.ToInt32(data, offset + 0x64);
+        // 9 independent range checks — fire when ≥ 7 pass. False positives
+        // at random offsets are vanishingly rare because all six fields have
+        // to align inside specific ranges simultaneously.
+        var score = 0;
+        if (ne >= 1 && ne <= 4000) score++;
+        if (cols >= 1 && cols <= 200) score++;
+        if (rows >= 1 && rows <= 200) score++;
+        if (eas >= 100 && eas < length) score++;
+        if (eas % 4 == 0) score++;
+        if (texll >= 0 && texll < 10000) score++;
+        if (texur >= 0 && texur < 10000) score++;
+        if (texur >= texll) score++;
+        if (wtoo >= 100 && wtoo < length) score++;
+        return score >= 7;
     }
 
     private static bool LooksLikeTex(byte[] data, int offset, int length)
