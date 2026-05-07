@@ -138,9 +138,6 @@ public class World
         var sdbNames = LoadAllSdbNames(directoriesToScan);
         if (sdbNames.Count == 0) return;
 
-        var sniff = new Dictionary<uint, string>();
-        foreach (var (h, ext) in focusClp.SniffedExtensionByHash) sniff.TryAdd(h, ext);
-
         var combinedRoles = new Dictionary<uint, DdfFile.AssetRole>();
         var combinedPairs = new Dictionary<uint, uint>();
         foreach (var d in directoriesToScan)
@@ -150,7 +147,7 @@ public class World
                 try
                 {
                     var ddf = DdfFile.Read(ddfPath);
-                    ddf.Parse(sdbNames, clpHashes, sniff);
+                    ddf.Parse(sdbNames, clpHashes);
                     foreach (var (hash, role) in ddf.RoleByClpHash) combinedRoles.TryAdd(hash, role);
                     foreach (var (mesh, tex) in ddf.TextureForMesh) combinedPairs.TryAdd(mesh, tex);
                     WorldDdf ??= ddf;
@@ -176,7 +173,6 @@ public class World
         if (EngineVersion != EngineVersion.BrotherhoodOfSteel || WorldDdf == null) return;
 
         var clpHashes = new HashSet<uint>();
-        var sniff = new Dictionary<uint, string>();
         foreach (var path in Directory.EnumerateFiles(DataPath, "*.CLP", SearchOption.TopDirectoryOnly))
         {
             try
@@ -185,7 +181,6 @@ public class World
                 var bytes = File.ReadAllBytes(path);
                 var loaded = new ClpFile(EngineVersion, Path.GetFileName(path), bytes, 0, bytes.Length);
                 loaded.ReadDirectory();
-                foreach (var (h, ext) in loaded.SniffedExtensionByHash) sniff.TryAdd(h, ext);
                 foreach (var (label, _) in loaded.Directory)
                 {
                     if (loaded.HashByLabel.TryGetValue(label, out var h))
@@ -202,7 +197,7 @@ public class World
         var sdbNames = LoadAllSdbNames(new[] { DataPath });
         if (sdbNames.Count == 0) return;
 
-        WorldDdf.Parse(sdbNames, clpHashes, sniff);
+        WorldDdf.Parse(sdbNames, clpHashes);
 
         // Wire role + pair resolvers into the loaded CLPs so the model viewer
         // can pair a clicked mesh with its right texture and the entry list

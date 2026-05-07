@@ -7,22 +7,37 @@ namespace JetBlackEngineLib.Data.DataContainers;
 /// ALL.DDF and the per-level *.DDF files are the master entity tables: they
 /// list every named game object (characters, armor, weapons, particle effects,
 /// dialogue triggers, …) and associate each entity with the CLP archive hashes
-/// of the assets it uses (mesh, texture, icon, sound) plus inline floats
+/// of the assets it uses (mesh, texture, animation, skeleton) plus inline floats
 /// holding stats.
 ///
-/// Layout (16-byte header, then variable-size records):
+/// File layout (verified against the Xbox decomp at default.xbe.c lines
+/// 93870–93940 and the PS2 binary):
+///
 ///   0x00  u32  totalRecordCount
 ///   0x04  u32  secondaryCount
-///   0x08  u32  numCategories         (19 in shipped data)
-///   0x0C  u32  hash / build signature
-///   0x10+      records of variable size
+///   0x08  u32  numCategories               (always 19 in shipped data)
+///   0x0C  19 × 40-byte category descriptors (760 bytes)
+///   ...   totalRecordCount × 12-byte directory entries:
+///                +0x00  u32  entity SDB hash
+///                +0x04  u32  file_offset of this entity's record
+///                +0x08  u32  zero on disk (becomes mem-pointer at runtime)
+///   ...   variable-size entity records, each:
+///                +0x00  u32  category code (drives schema dispatch)
+///                +0x10  u32  total record size in bytes
+///                +0x30+ u32  asset-reference array (CLP hashes)
 ///
-/// The schema is not fully decoded — record sizes vary by category and the
-/// per-category layouts aren't fully documented. <see cref="Parse"/> works
-/// structurally: it walks the file four bytes at a time, treating each u32
-/// that matches an SDB hash as a candidate entity record, and only attributes
-/// CLP asset hashes when they appear at one of the *canonical asset offsets*
-/// from that SDB hash. See <see cref="Parse"/> for the offsets and rationale.
+/// Engine asset resolution (xbe.c line 93699 + sub_6B060/sub_6B0A0/...):
+/// the engine switches on the category code at record+0x00, calls a per-
+/// category resolver, and that resolver walks the asset-ref array starting
+/// at record+0x30 in parallel with a hardcoded type-code table of the same
+/// length. Each non-zero hash is loaded with its corresponding type code:
+///   1 = mesh, 2 = texture, 3 = sound, 5–7 = cat-8 subsystems we haven't
+///   decoded, 9 / −1 = "skip, not an asset".
+/// Type 3 was empirically verified as sound: every named CLP hash that
+/// appears at a type-3 slot (~7000 references across all DDFs) has a .vag
+/// extension in the recovered name table.
+/// Type tables for each category were lifted from the Xbox binary's data
+/// section and are reproduced in <see cref="CategoryTypeTables"/>.
 /// </summary>
 public class DdfFile
 {
@@ -40,49 +55,50 @@ public class DdfFile
     public IReadOnlyDictionary<uint, IReadOnlyList<uint>> SiblingsByClpHash => _siblingsByClpHash;
 
     /// <summary>
-    /// Map from CLP entry hash to the role inferred from the DDF asset offset
-    /// at which it was referenced. Verified empirically: across the shipped
-    /// data, +0x2c never holds a TEX, +0x30 never holds a VIF, +0x38 holds a
-    /// VAG ~75% of the time. So the offset is a more authoritative type
-    /// signal than content sniffing for entries DDF actually mentions.
+    /// Map from CLP entry hash to the role the engine uses to load it (mesh,
+    /// texture, skeleton, animation, or other). Driven by the entity record's
+    /// category code and the per-category type-code table the engine consults.
     /// </summary>
     public IReadOnlyDictionary<uint, AssetRole> RoleByClpHash => _roleByClpHash;
 
     /// <summary>
-    /// Map from a mesh's CLP hash to the texture's CLP hash that shares its
-    /// DDF record. When several DDF records all reference the same entity
-    /// (e.g. multiple "Bottle Caps" item variants), each record's mesh and
-    /// texture get bound *to each other* here, so a viewer can pick the right
-    /// texture for a specific mesh instead of guessing.
+    /// Map from a mesh's CLP hash to the texture's CLP hash that immediately
+    /// follows it in the same record's asset-ref array. Used so the model
+    /// viewer can pick the right texture for a clicked mesh.
     /// </summary>
     public IReadOnlyDictionary<uint, uint> TextureForMesh => _textureForMesh;
 
     /// <summary>Reverse of <see cref="TextureForMesh"/>: texture hash → mesh hash.</summary>
     public IReadOnlyDictionary<uint, uint> MeshForTexture => _meshForTexture;
 
-    /// <summary>
-    /// One entry per asset record in the DDF (records preceded by the 0x3
-    /// type marker). Each entity holds the list of CLP asset references its
-    /// record contains, in pair-and-role form. Used by the entity-centric
-    /// tree view; preserves cases where multiple entities share the same
-    /// physical asset (e.g. Gold Ring and Wedding Ring both pointing at the
-    /// same mesh+tex pair).
-    /// </summary>
+    /// <summary>One entry per parsed entity record in the DDF.</summary>
     public IReadOnlyList<EntityRecord> Entities => _entities;
 
-    public enum AssetRole { Mesh, Texture, Sound, Other }
+    public enum AssetRole
+    {
+        /// <summary>Type 1 — BGDA-1 mesh (.vif).</summary>
+        Mesh,
+        /// <summary>Type 2 — GIF-tagged PS2 texture (.tex).</summary>
+        Texture,
+        /// <summary>Type 3 — sound (.vag, custom SFX, ADPCM).</summary>
+        Sound,
+        /// <summary>Types 5–7 — cat-8 subsystems we haven't fully decoded.</summary>
+        Other,
+    }
 
     public sealed class EntityRecord
     {
         public string Name { get; }
         public uint SdbHash { get; }
         public int RecordOffset { get; }
+        public int CategoryCode { get; }
         public List<EntityAsset> Assets { get; } = new();
-        internal EntityRecord(string name, uint sdbHash, int recordOffset)
+        internal EntityRecord(string name, uint sdbHash, int recordOffset, int categoryCode)
         {
             Name = name;
             SdbHash = sdbHash;
             RecordOffset = recordOffset;
+            CategoryCode = categoryCode;
         }
     }
 
@@ -105,13 +121,57 @@ public class DdfFile
         => new(Path.GetFileName(path), File.ReadAllBytes(path));
 
     /// <summary>
-    /// Walk the DDF and build the (entity → assets) graph.
+    /// Per-category type-code tables, lifted from the Xbox binary at the
+    /// addresses noted alongside. Each array's length is the number of
+    /// asset-ref slots the category's resolver walks at record+0x30. Entries
+    /// of value 9 (or −1, the cat-8 sentinel) mean "this slot isn't an asset
+    /// reference, skip it" — the engine still reads the slot but doesn't
+    /// dispatch a load.
+    ///
+    /// Categories absent from this table (5, 7, 9, 10, 11, 14–18) fall
+    /// through the engine's switch with no asset references at all.
     /// </summary>
-    /// <param name="sdbNames">SDB hash → display name lookup, used to identify entity records.</param>
-    /// <param name="knownClpHashes">Set of CLP entry hashes from the loaded archives, used to pick out asset references.</param>
-    /// <param name="sniffedExtensions">Optional CLP hash → sniffed extension (".vag", ".tex", ".vif"). When supplied, lets the parser tell a (mesh, texture) pair from two consecutive sound assets at the same DDF offsets.</param>
-    public void Parse(IReadOnlyDictionary<uint, string> sdbNames, IReadOnlySet<uint> knownClpHashes,
-        IReadOnlyDictionary<uint, string>? sniffedExtensions = null)
+    private static readonly IReadOnlyDictionary<uint, int[]> CategoryTypeTables =
+        new Dictionary<uint, int[]>
+        {
+            // Cat 0 (sub_6B170): walks E5B20..E5B34 — 5 slots.
+            { 0,  new[] { 1, 2, 2, 1, 2 } },
+            // Cat 1 (sub_6B390): walks E5B40..E5B68 — 10 slots.
+            { 1,  new[] { 1, 2, 2, 1, 2, 2, 2, 2, 2, 3 } },
+            // Cat 2 (sub_6B300): walks E5B9C..E5BB4 — 6 slots.
+            { 2,  new[] { 1, 2, 2, 3, 3, 3 } },
+            // Cat 3 (sub_6B120): walks E5B68..E5B78 — 4 slots.
+            { 3,  new[] { 1, 2, 2, 3 } },
+            // Cat 4 (sub_6B060): walks E5B14..E5B3C — 10 slots.
+            { 4,  new[] { 1, 2, 2, 1, 2, 2, 1, 2, 3, 3 } },
+            // Cat 6 (sub_6B0A0): walks E5B34..E5B40 — only 3 slots (sound, sound, texture).
+            // Easy mistake: E5B40 is also the start of cat 1's table, but that's
+            // the *exclusive bound* here, not the start. Reading bytes directly
+            // confirms 3 entries.
+            { 6,  new[] { 3, 3, 2 } },
+            // Cat 8 (sub_6B4A0): walks E5BB4..E5BDC — 10 slots, includes sentinels.
+            { 8,  new[] { 5, 6, 2, 7, -1, 9, 9, 2, 2, 2 } },
+            // Cat 12 (sub_6B0E0): walks E5B78..E5B9C — 9 slots.
+            { 12, new[] { 1, 2, 2, 1, 1, 1, 2, 2, 2 } },
+            // Cat 13 (sub_6B060): same resolver as cat 4.
+            { 13, new[] { 1, 2, 2, 1, 2, 2, 1, 2, 3, 3 } },
+        };
+
+    private const int HeaderSize = 12;
+    private const int CategoryDescriptorSize = 40;
+    private const int DirectoryEntrySize = 12;
+    private const int AssetArrayOffset = 0x30;
+
+    /// <summary>
+    /// Walk the DDF and build the (entity → assets) graph using the engine's
+    /// own category dispatch table.
+    /// </summary>
+    /// <param name="sdbNames">SDB hash → display name lookup. Used to attach a
+    /// human-readable name to each parsed entity.</param>
+    /// <param name="knownClpHashes">Set of CLP entry hashes from the loaded
+    /// archives. Slots holding values not in this set are dropped — they
+    /// reference assets in archives we don't have open.</param>
+    public void Parse(IReadOnlyDictionary<uint, string> sdbNames, IReadOnlySet<uint> knownClpHashes)
     {
         _nameByClpHash.Clear();
         _siblingsByClpHash.Clear();
@@ -120,133 +180,100 @@ public class DdfFile
         _meshForTexture.Clear();
         _entities.Clear();
 
-        if (FileData.Length < 16) return;
+        if (FileData.Length < HeaderSize) return;
 
-        // SDB hashes appear in the DDF in two roles:
-        //   1. as the +0x00 *header* of an asset record (the entity that owns
-        //      the bytes following), and
-        //   2. as inline cross-references inside *other* records — loot tables,
-        //      ammo conversion tables, dialogue trees, etc.
-        //
-        // We can't tell role from the hash alone, but role-1 records put their
-        // CLP asset hashes at fixed offsets from the SDB header (+0x2c..+0x44
-        // in shipped BoS data); role-2 reference lists hold *other SDB hashes*
-        // (or NaN sentinels) at those same offsets. So the rule is: only treat
-        // an SDB hash as the owner of a CLP hash when the CLP hash sits at one
-        // of the canonical asset slots and is actually a known CLP hash, not
-        // an SDB hash. This avoids attribution leakage between unrelated
-        // entities that share a record neighbourhood.
-        var entityToHashes = new Dictionary<string, HashSet<uint>>();
-        // Asset records hold a *series of pair slots*, each occupying 8 bytes:
-        //   pair A: +0x2c (mesh-or-sound) +0x30 (texture-or-zero)
-        //   pair B: +0x38 (mesh-or-sound) +0x3c (texture-or-zero)
-        //   pair C: +0x44 (mesh-or-sound) +0x48 (texture-or-zero)   [rare]
-        // separated by zero u32s at +0x34, +0x40.
-        //
-        // Within a pair, the rule is:
-        //   - both halves hold CLP hashes  →  (mesh, texture) for that body
-        //                                     part / variant
-        //   - first half holds a CLP hash, second is zero  →  the first half
-        //                                     is a secondary asset (sound for
-        //                                     items, sometimes an icon)
-        //
-        // For most item records only pair A is filled and pair B's first
-        // half holds a sound. For characters with multiple body parts (Nadia
-        // body + hair, etc.) both pair A and pair B carry mesh+texture pairs.
-        //
-        // The other lone slots (+0x34, +0x40, +0x44 alone) sometimes pick up
-        // refs from wrapper/stub records whose inner record happens to
-        // coincide. Don't attribute through those — see the "Bottle Caps"
-        // wrapper at @0x4a1c0 → cw_mutant_telephonepole_2600 case.
-        var pairOffsets = new[] { (0x2c, 0x30), (0x38, 0x3c), (0x44, 0x48) };
+        var totalRecords = BitConverter.ToUInt32(FileData, 0);
+        var numCategories = BitConverter.ToUInt32(FileData, 8);
+        if (numCategories == 0 || numCategories > 64) return;
 
-        // Wrappers / index records (e.g. the loot-table at @0x4C0C grouping
-        // Torn Paper + Mega Power Fists + …) hold inline SDB hashes that
-        // would otherwise look like primary records. They're filtered out
-        // structurally: they put zeros / DDF offsets at the canonical pair
-        // offsets, so the per-record asset count is zero and we drop them.
-        for (var off = 16; off + 0x48 <= FileData.Length; off += 4)
+        var directoryOffset = HeaderSize + (int)numCategories * CategoryDescriptorSize;
+        if (directoryOffset + (long)totalRecords * DirectoryEntrySize > FileData.Length) return;
+
+        var entityToHashes = new Dictionary<uint, HashSet<uint>>();
+
+        for (var i = 0u; i < totalRecords; i++)
         {
-            var primary = BitConverter.ToUInt32(FileData, off);
-            if (primary == 0 || !sdbNames.TryGetValue(primary, out var entityName))
-            {
+            var entryOffset = directoryOffset + (int)i * DirectoryEntrySize;
+            var entityHash = BitConverter.ToUInt32(FileData, entryOffset);
+            var recordOffset = (int)BitConverter.ToUInt32(FileData, entryOffset + 4);
+
+            if (recordOffset < directoryOffset || recordOffset + AssetArrayOffset > FileData.Length)
                 continue;
-            }
 
-            HashSet<uint>? bag = null;
-            var entity = new EntityRecord(entityName, primary, off);
-            foreach (var (meshOff, texOff) in pairOffsets)
+            var category = BitConverter.ToUInt32(FileData, recordOffset);
+            if (!CategoryTypeTables.TryGetValue(category, out var typeTable))
+                continue;
+
+            var assetArrayStart = recordOffset + AssetArrayOffset;
+            if (assetArrayStart + typeTable.Length * 4 > FileData.Length) continue;
+
+            // Skip records whose entity hash isn't in any loaded SDB. The
+            // engine resolves these via inter-DDF cross-references at runtime,
+            // but for the explorer's tree it just produces hash placeholders
+            // with no way to identify what they are. The caller can broaden
+            // SDB coverage if it wants more entities visible.
+            if (!sdbNames.TryGetValue(entityHash, out var entityName)) continue;
+            var entity = new EntityRecord(entityName, entityHash, recordOffset, (int)category);
+
+            // Walk the asset-ref array in the engine's order, attributing each
+            // slot using the category's type table. Pair each mesh with the
+            // first texture that follows it before the next mesh.
+            uint? pendingMesh = null;
+            for (var slot = 0; slot < typeTable.Length; slot++)
             {
-                if (off + texOff + 4 > FileData.Length) break;
-                var meshCandidate = BitConverter.ToUInt32(FileData, off + meshOff);
-                var texCandidate = BitConverter.ToUInt32(FileData, off + texOff);
+                var typeCode = typeTable[slot];
+                if (typeCode == 9 || typeCode == -1) continue; // sentinels — not an asset
 
-                var meshIsClp = meshCandidate != 0 && !sdbNames.ContainsKey(meshCandidate)
-                                && knownClpHashes.Contains(meshCandidate);
-                var texIsClp = texCandidate != 0 && !sdbNames.ContainsKey(texCandidate)
-                               && knownClpHashes.Contains(texCandidate);
+                var slotValue = BitConverter.ToUInt32(FileData, assetArrayStart + slot * 4);
+                if (slotValue == 0 || !knownClpHashes.Contains(slotValue)) continue;
 
-                if (meshIsClp && texIsClp)
+                var role = TypeCodeToRole(typeCode);
+
+                uint? paired = null;
+                if (role == AssetRole.Mesh)
                 {
-                    // Some asset records park two consecutive VAGs at the same
-                    // offsets a mesh+texture pair would occupy (e.g. Beretta's
-                    // pair B at +0x38/+0x3c is two sound effects, not a hair
-                    // mesh+texture). When sniff data tells us the bytes are
-                    // VAG, treat each half as its own sound asset rather than
-                    // pairing them.
-                    var firstIsVag = sniffedExtensions != null
-                        && sniffedExtensions.TryGetValue(meshCandidate, out var fe) && fe == ".vag";
-                    var secondIsVag = sniffedExtensions != null
-                        && sniffedExtensions.TryGetValue(texCandidate, out var se) && se == ".vag";
-                    if (firstIsVag || secondIsVag)
-                    {
-                        Attribute(meshCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
-                        Attribute(texCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
-                        entity.Assets.Add(new EntityAsset(meshCandidate, AssetRole.Sound, null));
-                        entity.Assets.Add(new EntityAsset(texCandidate, AssetRole.Sound, null));
-                    }
-                    else
-                    {
-                        Attribute(meshCandidate, AssetRole.Mesh, entityName, ref bag, entityToHashes);
-                        Attribute(texCandidate, AssetRole.Texture, entityName, ref bag, entityToHashes);
-                        if (!_textureForMesh.ContainsKey(meshCandidate))
-                            _textureForMesh[meshCandidate] = texCandidate;
-                        if (!_meshForTexture.ContainsKey(texCandidate))
-                            _meshForTexture[texCandidate] = meshCandidate;
-                        entity.Assets.Add(new EntityAsset(meshCandidate, AssetRole.Mesh, texCandidate));
-                        entity.Assets.Add(new EntityAsset(texCandidate, AssetRole.Texture, meshCandidate));
-                    }
+                    pendingMesh = slotValue;
                 }
-                else if (meshIsClp && texCandidate == 0)
+                else if (role == AssetRole.Texture && pendingMesh is uint mesh)
                 {
-                    Attribute(meshCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
-                    entity.Assets.Add(new EntityAsset(meshCandidate, AssetRole.Sound, null));
+                    paired = mesh;
+                    if (!_textureForMesh.ContainsKey(mesh)) _textureForMesh[mesh] = slotValue;
+                    if (!_meshForTexture.ContainsKey(slotValue)) _meshForTexture[slotValue] = mesh;
+                    pendingMesh = null; // pair only with the first following texture
                 }
+
+                Attribute(slotValue, role, entityHash, entity, entityToHashes);
+                entity.Assets.Add(new EntityAsset(slotValue, role, paired));
             }
-            if (entity.Assets.Count > 0)
-            {
-                _entities.Add(entity);
-            }
+
+            if (entity.Assets.Count > 0) _entities.Add(entity);
         }
 
-        // (sibling materialisation follows)
         FinishSiblings(entityToHashes);
     }
 
-    private void Attribute(uint candidate, AssetRole role, string entityName,
-        ref HashSet<uint>? bag, Dictionary<string, HashSet<uint>> entityToHashes)
+    private static AssetRole TypeCodeToRole(int typeCode) => typeCode switch
     {
-        if (bag == null && !entityToHashes.TryGetValue(entityName, out bag))
+        1 => AssetRole.Mesh,
+        2 => AssetRole.Texture,
+        3 => AssetRole.Sound,
+        _ => AssetRole.Other,
+    };
+
+    private void Attribute(uint clpHash, AssetRole role, uint entityHash, EntityRecord entity,
+        Dictionary<uint, HashSet<uint>> entityToHashes)
+    {
+        if (!entityToHashes.TryGetValue(entityHash, out var bag))
         {
             bag = new HashSet<uint>();
-            entityToHashes[entityName] = bag;
+            entityToHashes[entityHash] = bag;
         }
-        bag!.Add(candidate);
-        if (!_nameByClpHash.ContainsKey(candidate)) _nameByClpHash[candidate] = entityName;
-        if (!_roleByClpHash.ContainsKey(candidate)) _roleByClpHash[candidate] = role;
+        bag.Add(clpHash);
+        if (!_nameByClpHash.ContainsKey(clpHash)) _nameByClpHash[clpHash] = entity.Name;
+        if (!_roleByClpHash.ContainsKey(clpHash)) _roleByClpHash[clpHash] = role;
     }
 
-    private void FinishSiblings(Dictionary<string, HashSet<uint>> entityToHashes)
+    private void FinishSiblings(Dictionary<uint, HashSet<uint>> entityToHashes)
     {
         foreach (var (_, hashes) in entityToHashes)
         {
