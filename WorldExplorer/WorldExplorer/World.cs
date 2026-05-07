@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2012 Ian Brown
+/*  Copyright (C) 2012 Ian Brown
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ public class World
     public readonly string Name;
     public CacheFile? HdrDatFile;
 
-    // The parsed data from the various files.
     public WorldData? WorldData = null;
 
     public GobFile? WorldGob;
@@ -40,6 +39,14 @@ public class World
     public YakFile? WorldYak;
     public SdbFile? WorldSdb;
     public DdfFile? WorldDdf;
+
+    /// <summary>
+    /// CLP entry hash → (archive, entry label) for every archive loaded
+    /// alongside an opened DDF. The DDF tree resolves entity asset hashes
+    /// through here. Empty for non-DDF flows.
+    /// </summary>
+    public readonly Dictionary<uint, ClpAssetRef> AssetIndex = new();
+    public readonly List<ClpFile> LoadedClps = new();
 
     public World(EngineVersion engineVersion, string dataPath, string name)
     {
@@ -58,18 +65,9 @@ public class World
                 var texFileName = Path.GetFileNameWithoutExtension(Name) + ".tex";
                 var textFilePath = Path.Combine(DataPath, texFileName);
                 WorldGob = new GobFile(EngineVersion, Path.Combine(DataPath, Name));
-                if (File.Exists(textFilePath))
-                {
-                    WorldTex = new WorldTexFile(EngineVersion, textFilePath);
-                }
-                else
-                {
-                    WorldTex = null;
-                }
-
+                WorldTex = File.Exists(textFilePath) ? new WorldTexFile(EngineVersion, textFilePath) : null;
                 break;
             case ".lmp":
-                // TODO: Support just passing the filepath instead of having to load data here
                 var data = File.ReadAllBytes(Path.Combine(DataPath, Name));
                 WorldLmp = new LmpFile(EngineVersion, Name, data, 0, data.Length);
                 break;
@@ -77,7 +75,11 @@ public class World
                 var clpData = File.ReadAllBytes(Path.Combine(DataPath, Name));
                 var clp = new ClpFile(EngineVersion, Name, clpData, 0, clpData.Length);
                 WorldLmp = clp;
-                AttachBosLinkage(clp, clpData);
+                AttachClpResolvers(clp);
+                break;
+            case ".ddf":
+                WorldDdf = DdfFile.Read(Path.Combine(DataPath, Name));
+                LoadDdfWithSiblings();
                 break;
             case ".sdb":
                 var sdbData = File.ReadAllBytes(Path.Combine(DataPath, Name));
@@ -99,62 +101,150 @@ public class World
     }
 
     /// <summary>
-    /// For BoS .CLP archives, walk the file's directory and every ancestor up
-    /// to the BoS DATA root, collecting all .SDB string databases and .DDF
-    /// data-definition files we can find. Each level's pack contributes its
-    /// own (hash → name) entries; level-specific archives like
-    /// <c>C1/BAR/BAR.CLP</c> reference hashes that only resolve in
-    /// <c>C1/BAR/BAR.SDB</c> + <c>BAR.DDF</c>, while shared assets in
-    /// <c>ARMOR.CLP</c> resolve through the root <c>GLOBAL.SDB</c> +
-    /// <c>ALL.DDF</c>. Combine all of them so the right names show up no
-    /// matter where the user opened the file from.
+    /// For an opened .CLP: walk the file's directory + every ancestor up to
+    /// the BoS DATA root, collect SDB names + every CLP archive's hashes +
+    /// every DDF's role/pair maps, and wire RoleResolver / TexturePairResolver
+    /// onto the focus CLP so its directory entries get correct extensions and
+    /// the model viewer can pair meshes with the right textures. We don't
+    /// keep the other archives loaded — only the focused one.
     /// </summary>
-    private void AttachBosLinkage(ClpFile clp, byte[] clpData)
+    private void AttachClpResolvers(ClpFile focusClp)
     {
-        if (EngineVersion != EngineVersion.BrotherhoodOfSteel)
-        {
-            return;
-        }
+        if (EngineVersion != EngineVersion.BrotherhoodOfSteel) return;
 
-        // Walk from the CLP's directory up to the filesystem root, recording
-        // every directory along the way. Stop at the topmost directory that
-        // contains the canonical BoS root markers (ALL.DDF + a *.SDB) so we
-        // don't wander into unrelated parents.
-        var directoriesToScan = new List<string>();
-        var dir = DataPath;
-        for (var i = 0; i < 8 && !string.IsNullOrEmpty(dir); i++)
-        {
-            directoriesToScan.Add(dir);
-            if (File.Exists(Path.Combine(dir, "ALL.DDF")))
-            {
-                break; // found the BoS root, no need to climb further
-            }
-            dir = Path.GetDirectoryName(dir);
-        }
+        var directoriesToScan = WalkUpToBosRoot(DataPath);
 
-        // Collect the set of CLP entry hashes from every reachable archive in
-        // the scanned directories. DdfFile.Parse uses this to distinguish
-        // real asset references from incidental u32s in the DDF.
         var clpHashes = new HashSet<uint>();
+        CollectHashesFromBytes(focusClp.FileData, clpHashes);
         foreach (var d in directoriesToScan)
         {
-            foreach (var path in System.IO.Directory.EnumerateFiles(d, "*.CLP", SearchOption.TopDirectoryOnly))
+            foreach (var path in Directory.EnumerateFiles(d, "*.CLP", SearchOption.TopDirectoryOnly))
             {
+                if (string.Equals(Path.GetFullPath(path),
+                        Path.GetFullPath(Path.Combine(DataPath, focusClp.Name)),
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 try
                 {
                     if (new FileInfo(path).Length > 200_000_000) continue;
-                    CollectHashes(File.ReadAllBytes(path), clpHashes);
+                    CollectHashesFromBytes(File.ReadAllBytes(path), clpHashes);
                 }
                 catch { }
             }
         }
-        CollectHashes(clpData, clpHashes);
 
-        // Merge SDB names from every .SDB found across the scanned directories.
-        var sdbNames = new Dictionary<uint, string>();
+        var sdbNames = LoadAllSdbNames(directoriesToScan);
+        if (sdbNames.Count == 0) return;
+
+        var sniff = new Dictionary<uint, string>();
+        foreach (var (h, ext) in focusClp.SniffedExtensionByHash) sniff.TryAdd(h, ext);
+
+        var combinedRoles = new Dictionary<uint, DdfFile.AssetRole>();
+        var combinedPairs = new Dictionary<uint, uint>();
         foreach (var d in directoriesToScan)
         {
-            foreach (var sdbPath in System.IO.Directory.EnumerateFiles(d, "*.SDB", SearchOption.TopDirectoryOnly))
+            foreach (var ddfPath in Directory.EnumerateFiles(d, "*.DDF", SearchOption.TopDirectoryOnly))
+            {
+                try
+                {
+                    var ddf = DdfFile.Read(ddfPath);
+                    ddf.Parse(sdbNames, clpHashes, sniff);
+                    foreach (var (hash, role) in ddf.RoleByClpHash) combinedRoles.TryAdd(hash, role);
+                    foreach (var (mesh, tex) in ddf.TextureForMesh) combinedPairs.TryAdd(mesh, tex);
+                    WorldDdf ??= ddf;
+                }
+                catch { }
+            }
+        }
+
+        focusClp.RoleResolver = h => combinedRoles.TryGetValue(h, out var r) ? RoleToExtension(r) : null;
+        focusClp.TexturePairResolver = h => combinedPairs.TryGetValue(h, out var t) ? t : null;
+    }
+
+    /// <summary>
+    /// For an opened .DDF: scan ONLY the file's own directory. We deliberately
+    /// don't walk up to the root, so opening a level DDF (e.g.
+    /// C3/GARDEN/GARDEN.DDF) doesn't pull in ALL.DDF + GLOBAL.CLP + every
+    /// other shared archive. Hashes the level DDF references but that aren't
+    /// in any local archive show up as "[not loaded]" leaves in the tree —
+    /// the user can open the relevant global archive separately.
+    /// </summary>
+    private void LoadDdfWithSiblings()
+    {
+        if (EngineVersion != EngineVersion.BrotherhoodOfSteel || WorldDdf == null) return;
+
+        var clpHashes = new HashSet<uint>();
+        var sniff = new Dictionary<uint, string>();
+        foreach (var path in Directory.EnumerateFiles(DataPath, "*.CLP", SearchOption.TopDirectoryOnly))
+        {
+            try
+            {
+                if (new FileInfo(path).Length > 200_000_000) continue;
+                var bytes = File.ReadAllBytes(path);
+                var loaded = new ClpFile(EngineVersion, Path.GetFileName(path), bytes, 0, bytes.Length);
+                loaded.ReadDirectory();
+                foreach (var (h, ext) in loaded.SniffedExtensionByHash) sniff.TryAdd(h, ext);
+                foreach (var (label, _) in loaded.Directory)
+                {
+                    if (loaded.HashByLabel.TryGetValue(label, out var h))
+                    {
+                        clpHashes.Add(h);
+                        AssetIndex.TryAdd(h, new ClpAssetRef(loaded, label));
+                    }
+                }
+                LoadedClps.Add(loaded);
+            }
+            catch { }
+        }
+
+        var sdbNames = LoadAllSdbNames(new[] { DataPath });
+        if (sdbNames.Count == 0) return;
+
+        WorldDdf.Parse(sdbNames, clpHashes, sniff);
+
+        // Wire role + pair resolvers into the loaded CLPs so the model viewer
+        // can pair a clicked mesh with its right texture and the entry list
+        // gets correct extensions. ReadDirectory is re-run so the ext-from-
+        // role override applies; AssetIndex is rebuilt against the new labels.
+        var roleRes = (Func<uint, string?>)(h => WorldDdf.RoleByClpHash.TryGetValue(h, out var r) ? RoleToExtension(r) : null);
+        var pairRes = (Func<uint, uint?>)(h => WorldDdf.TextureForMesh.TryGetValue(h, out var t) ? t : null);
+        AssetIndex.Clear();
+        foreach (var loaded in LoadedClps)
+        {
+            loaded.RoleResolver = roleRes;
+            loaded.TexturePairResolver = pairRes;
+            loaded.ReadDirectory();
+            foreach (var (label, _) in loaded.Directory)
+            {
+                if (loaded.HashByLabel.TryGetValue(label, out var h))
+                {
+                    AssetIndex.TryAdd(h, new ClpAssetRef(loaded, label));
+                }
+            }
+        }
+    }
+
+    private static List<string> WalkUpToBosRoot(string startDir)
+    {
+        var dirs = new List<string>();
+        var dir = startDir;
+        for (var i = 0; i < 8 && !string.IsNullOrEmpty(dir); i++)
+        {
+            dirs.Add(dir);
+            if (File.Exists(Path.Combine(dir, "ALL.DDF"))) break;
+            dir = Path.GetDirectoryName(dir);
+        }
+        return dirs;
+    }
+
+    private static Dictionary<uint, string> LoadAllSdbNames(IEnumerable<string> dirs)
+    {
+        var sdbNames = new Dictionary<uint, string>();
+        foreach (var d in dirs)
+        {
+            foreach (var sdbPath in Directory.EnumerateFiles(d, "*.SDB", SearchOption.TopDirectoryOnly))
             {
                 try
                 {
@@ -162,65 +252,13 @@ public class World
                     sdb.ReadDirectory();
                     foreach (var rec in sdb.Records)
                     {
-                        if (rec.Text != null && !sdbNames.ContainsKey(rec.Hash))
-                        {
-                            sdbNames[rec.Hash] = rec.Text;
-                        }
+                        if (rec.Text != null) sdbNames.TryAdd(rec.Hash, rec.Text);
                     }
                 }
                 catch { }
             }
         }
-        if (sdbNames.Count == 0)
-        {
-            return;
-        }
-
-        // Parse every .DDF found, merging the (hash → entity), (hash → role),
-        // and (mesh → texture pair) maps the CLP reader / UI need.
-        var combinedNames = new Dictionary<uint, string>();
-        var combinedRoles = new Dictionary<uint, DdfFile.AssetRole>();
-        var combinedPairs = new Dictionary<uint, uint>();
-        foreach (var d in directoriesToScan)
-        {
-            foreach (var ddfPath in System.IO.Directory.EnumerateFiles(d, "*.DDF", SearchOption.TopDirectoryOnly))
-            {
-                try
-                {
-                    var ddf = DdfFile.Read(ddfPath);
-                    ddf.Parse(sdbNames, clpHashes);
-                    foreach (var (hash, name) in ddf.NameByClpHash)
-                    {
-                        if (!combinedNames.ContainsKey(hash)) combinedNames[hash] = name;
-                    }
-                    foreach (var (hash, role) in ddf.RoleByClpHash)
-                    {
-                        if (!combinedRoles.ContainsKey(hash)) combinedRoles[hash] = role;
-                    }
-                    foreach (var (mesh, tex) in ddf.TextureForMesh)
-                    {
-                        if (!combinedPairs.ContainsKey(mesh)) combinedPairs[mesh] = tex;
-                    }
-                    // Hold onto the first parsed DDF so the WorldExplorer's SDB
-                    // viewer can also display it; later DDFs are merged in too.
-                    WorldDdf ??= ddf;
-                }
-                catch { }
-            }
-        }
-
-        if (combinedNames.Count > 0)
-        {
-            clp.NameResolver = h => combinedNames.TryGetValue(h, out var name) ? name : null;
-        }
-        if (combinedRoles.Count > 0)
-        {
-            clp.RoleResolver = h => combinedRoles.TryGetValue(h, out var role) ? RoleToExtension(role) : null;
-        }
-        if (combinedPairs.Count > 0)
-        {
-            clp.TexturePairResolver = h => combinedPairs.TryGetValue(h, out var tex) ? tex : (uint?)null;
-        }
+        return sdbNames;
     }
 
     private static string? RoleToExtension(DdfFile.AssetRole role) => role switch
@@ -228,19 +266,18 @@ public class World
         DdfFile.AssetRole.Mesh => ".vif",
         DdfFile.AssetRole.Texture => ".tex",
         DdfFile.AssetRole.Sound => ".vag",
-        _ => null, // let the sniffer decide
+        _ => null,
     };
 
-    private static void CollectHashes(byte[] data, HashSet<uint> sink)
+    private static void CollectHashesFromBytes(byte[] data, HashSet<uint> sink)
     {
         if (data.Length < 24) return;
         if (BitConverter.ToUInt32(data, 0) != ClpFile.Magic) return;
         var f8 = BitConverter.ToUInt32(data, 8);
         if (f8 == 0) return;
-        // Pick the largest power-of-two multiplier that keeps the dir within the file.
         var sectorSize = 1L;
         while ((f8 << 1) * sectorSize < data.Length) sectorSize <<= 1;
-        var dirOff = (int)(f8 * (uint)sectorSize);
+        var dirOff = (int)(f8 * sectorSize);
         if (dirOff <= 0 || dirOff >= data.Length) return;
         for (var i = dirOff; i + 20 <= data.Length; i += 20)
         {
@@ -249,3 +286,5 @@ public class World
         }
     }
 }
+
+public sealed record ClpAssetRef(ClpFile Clp, string EntryLabel);

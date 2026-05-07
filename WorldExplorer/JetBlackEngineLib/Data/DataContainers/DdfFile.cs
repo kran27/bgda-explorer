@@ -60,13 +60,40 @@ public class DdfFile
     /// <summary>Reverse of <see cref="TextureForMesh"/>: texture hash → mesh hash.</summary>
     public IReadOnlyDictionary<uint, uint> MeshForTexture => _meshForTexture;
 
+    /// <summary>
+    /// One entry per asset record in the DDF (records preceded by the 0x3
+    /// type marker). Each entity holds the list of CLP asset references its
+    /// record contains, in pair-and-role form. Used by the entity-centric
+    /// tree view; preserves cases where multiple entities share the same
+    /// physical asset (e.g. Gold Ring and Wedding Ring both pointing at the
+    /// same mesh+tex pair).
+    /// </summary>
+    public IReadOnlyList<EntityRecord> Entities => _entities;
+
     public enum AssetRole { Mesh, Texture, Sound, Other }
+
+    public sealed class EntityRecord
+    {
+        public string Name { get; }
+        public uint SdbHash { get; }
+        public int RecordOffset { get; }
+        public List<EntityAsset> Assets { get; } = new();
+        internal EntityRecord(string name, uint sdbHash, int recordOffset)
+        {
+            Name = name;
+            SdbHash = sdbHash;
+            RecordOffset = recordOffset;
+        }
+    }
+
+    public sealed record EntityAsset(uint Hash, AssetRole Role, uint? PairedHash);
 
     private readonly Dictionary<uint, string> _nameByClpHash = new();
     private readonly Dictionary<uint, IReadOnlyList<uint>> _siblingsByClpHash = new();
     private readonly Dictionary<uint, AssetRole> _roleByClpHash = new();
     private readonly Dictionary<uint, uint> _textureForMesh = new();
     private readonly Dictionary<uint, uint> _meshForTexture = new();
+    private readonly List<EntityRecord> _entities = new();
 
     public DdfFile(string name, byte[] data)
     {
@@ -82,13 +109,16 @@ public class DdfFile
     /// </summary>
     /// <param name="sdbNames">SDB hash → display name lookup, used to identify entity records.</param>
     /// <param name="knownClpHashes">Set of CLP entry hashes from the loaded archives, used to pick out asset references.</param>
-    public void Parse(IReadOnlyDictionary<uint, string> sdbNames, IReadOnlySet<uint> knownClpHashes)
+    /// <param name="sniffedExtensions">Optional CLP hash → sniffed extension (".vag", ".tex", ".vif"). When supplied, lets the parser tell a (mesh, texture) pair from two consecutive sound assets at the same DDF offsets.</param>
+    public void Parse(IReadOnlyDictionary<uint, string> sdbNames, IReadOnlySet<uint> knownClpHashes,
+        IReadOnlyDictionary<uint, string>? sniffedExtensions = null)
     {
         _nameByClpHash.Clear();
         _siblingsByClpHash.Clear();
         _roleByClpHash.Clear();
         _textureForMesh.Clear();
         _meshForTexture.Clear();
+        _entities.Clear();
 
         if (FileData.Length < 16) return;
 
@@ -130,6 +160,11 @@ public class DdfFile
         // wrapper at @0x4a1c0 → cw_mutant_telephonepole_2600 case.
         var pairOffsets = new[] { (0x2c, 0x30), (0x38, 0x3c), (0x44, 0x48) };
 
+        // Wrappers / index records (e.g. the loot-table at @0x4C0C grouping
+        // Torn Paper + Mega Power Fists + …) hold inline SDB hashes that
+        // would otherwise look like primary records. They're filtered out
+        // structurally: they put zeros / DDF offsets at the canonical pair
+        // offsets, so the per-record asset count is zero and we drop them.
         for (var off = 16; off + 0x48 <= FileData.Length; off += 4)
         {
             var primary = BitConverter.ToUInt32(FileData, off);
@@ -139,6 +174,7 @@ public class DdfFile
             }
 
             HashSet<uint>? bag = null;
+            var entity = new EntityRecord(entityName, primary, off);
             foreach (var (meshOff, texOff) in pairOffsets)
             {
                 if (off + texOff + 4 > FileData.Length) break;
@@ -152,22 +188,44 @@ public class DdfFile
 
                 if (meshIsClp && texIsClp)
                 {
-                    // Full (mesh, texture) pair — bind them to each other.
-                    Attribute(meshCandidate, AssetRole.Mesh, entityName, ref bag, entityToHashes);
-                    Attribute(texCandidate, AssetRole.Texture, entityName, ref bag, entityToHashes);
-                    if (!_textureForMesh.ContainsKey(meshCandidate))
-                        _textureForMesh[meshCandidate] = texCandidate;
-                    if (!_meshForTexture.ContainsKey(texCandidate))
-                        _meshForTexture[texCandidate] = meshCandidate;
+                    // Some asset records park two consecutive VAGs at the same
+                    // offsets a mesh+texture pair would occupy (e.g. Beretta's
+                    // pair B at +0x38/+0x3c is two sound effects, not a hair
+                    // mesh+texture). When sniff data tells us the bytes are
+                    // VAG, treat each half as its own sound asset rather than
+                    // pairing them.
+                    var firstIsVag = sniffedExtensions != null
+                        && sniffedExtensions.TryGetValue(meshCandidate, out var fe) && fe == ".vag";
+                    var secondIsVag = sniffedExtensions != null
+                        && sniffedExtensions.TryGetValue(texCandidate, out var se) && se == ".vag";
+                    if (firstIsVag || secondIsVag)
+                    {
+                        Attribute(meshCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
+                        Attribute(texCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
+                        entity.Assets.Add(new EntityAsset(meshCandidate, AssetRole.Sound, null));
+                        entity.Assets.Add(new EntityAsset(texCandidate, AssetRole.Sound, null));
+                    }
+                    else
+                    {
+                        Attribute(meshCandidate, AssetRole.Mesh, entityName, ref bag, entityToHashes);
+                        Attribute(texCandidate, AssetRole.Texture, entityName, ref bag, entityToHashes);
+                        if (!_textureForMesh.ContainsKey(meshCandidate))
+                            _textureForMesh[meshCandidate] = texCandidate;
+                        if (!_meshForTexture.ContainsKey(texCandidate))
+                            _meshForTexture[texCandidate] = meshCandidate;
+                        entity.Assets.Add(new EntityAsset(meshCandidate, AssetRole.Mesh, texCandidate));
+                        entity.Assets.Add(new EntityAsset(texCandidate, AssetRole.Texture, meshCandidate));
+                    }
                 }
                 else if (meshIsClp && texCandidate == 0)
                 {
-                    // Lone first-half slot with a zero second half — treat as
-                    // a secondary asset (sound for items, occasionally icon).
                     Attribute(meshCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
+                    entity.Assets.Add(new EntityAsset(meshCandidate, AssetRole.Sound, null));
                 }
-                // Anything else (texture-only, or non-zero non-CLP halves)
-                // we skip — those are stat fields or wrapper-record bleed.
+            }
+            if (entity.Assets.Count > 0)
+            {
+                _entities.Add(entity);
             }
         }
 

@@ -33,20 +33,14 @@ namespace JetBlackEngineLib.Data.DataContainers;
 /// a 32-byte name table, etc.). The data is *scattered* through the data area
 /// — not laid out in directory order — and the per-entry offset comes from
 /// the <c>dataOffsetSectors</c> field. There is no per-entry filename anywhere
-/// in the archive; we resolve names externally via DDF + SDB lookup
-/// (<see cref="NameResolver"/>).
+/// in the archive — entries are addressed by hash. We label them
+/// <c>slotNNN_HASH.ext</c>, where the extension comes from
+/// <see cref="RoleResolver"/> (DDF-derived) or content sniffing.
 /// </summary>
 public class ClpFile : LmpFile
 {
     /// <summary>'CLMP' read as a little-endian uint32 from the on-disk byte sequence "PMLC".</summary>
     public const uint Magic = 0x434C4D50;
-
-    /// <summary>
-    /// Optional resolver: given a CLP entry hash, return the entity name that
-    /// owns it (typically discovered via the sibling DDF). When set, directory
-    /// labels use the entity name; otherwise they fall back to the raw hex hash.
-    /// </summary>
-    public Func<uint, string?>? NameResolver { get; set; }
 
     /// <summary>
     /// Optional resolver: given a CLP entry hash, return the file extension the
@@ -66,6 +60,16 @@ public class ClpFile : LmpFile
     public IReadOnlyDictionary<string, uint> HashByLabel => _hashByLabel;
 
     /// <summary>
+    /// Map from CLP entry hash to the file extension produced by content
+    /// sniffing (".vag", ".tex", ".vif", ".dat", …). Populated during
+    /// <see cref="ReadDirectory"/>. Used by the DDF parser to disambiguate
+    /// adjacent slots whose roles can't be inferred from offset alone — a
+    /// (mesh, texture) pair vs. two consecutive sound assets share the same
+    /// DDF layout, but their actual bytes differ.
+    /// </summary>
+    public IReadOnlyDictionary<uint, string> SniffedExtensionByHash => _sniffedExtensionByHash;
+
+    /// <summary>
     /// Optional resolver: given a mesh's CLP hash, return the texture's CLP
     /// hash that DDF says pairs with it (from the same DDF asset record).
     /// When several meshes/textures share an entity name, this picks the
@@ -75,6 +79,7 @@ public class ClpFile : LmpFile
     public Func<uint, uint?>? TexturePairResolver { get; set; }
 
     private readonly Dictionary<string, uint> _hashByLabel = new();
+    private readonly Dictionary<uint, string> _sniffedExtensionByHash = new();
 
     public ClpFile(EngineVersion engineVersion, string name, byte[] data, int startOffset, int dataLen)
         : base(engineVersion, name, data, startOffset, dataLen)
@@ -85,6 +90,7 @@ public class ClpFile : LmpFile
     {
         Directory.Clear();
         _hashByLabel.Clear();
+        _sniffedExtensionByHash.Clear();
 
         if (_dataLen < 24) return;
 
@@ -130,6 +136,7 @@ public class ClpFile : LmpFile
                 fileStart + size <= _startOffset + _dataLen)
             {
                 var (sniffedExt, embeddedName) = Sniff(FileData, fileStart, size);
+                _sniffedExtensionByHash[hash] = sniffedExt;
                 // Prefer the DDF-derived role over content sniffing — DDF tells
                 // us the type even when the bytes are in a format the sniffer
                 // can't decode (e.g. BoS's inventory mesh format).
@@ -144,32 +151,19 @@ public class ClpFile : LmpFile
 
     private void AddEntry(int slot, uint hash, int start, int length, string ext, string? embeddedName)
     {
-        // Label preference: caller-provided entity name (DDF) > embedded name
-        // (e.g. VAG header) > raw hash.
-        var resolved = NameResolver?.Invoke(hash);
-        var idPart = !string.IsNullOrEmpty(resolved)
-            ? Sanitize(resolved!)
-            : embeddedName ?? $"{hash:X8}";
-
+        // Label preference: in-file embedded name (e.g. the 16-char name a
+        // VAG header carries) > raw hash. We don't use DDF entity names here
+        // because CLP entries are routinely shared across many DDF entities
+        // (Gold Ring + Wedding Ring + … all reuse the same mesh+tex), so
+        // attributing one name to the slot is misleading.
+        var idPart = embeddedName ?? $"{hash:X8}";
         var label = $"slot{slot:D3}_{idPart}{ext}";
         if (Directory.ContainsKey(label))
         {
-            // Two entries pointing at the same DDF entity (e.g. multiple
-            // texture variants) — disambiguate with the raw hash.
             label = $"slot{slot:D3}_{idPart}_{hash:X8}{ext}";
         }
         Directory[label] = new EntryInfo(label, start, length);
         _hashByLabel[label] = hash;
-    }
-
-    private static string Sanitize(string s)
-    {
-        var sb = new System.Text.StringBuilder(s.Length);
-        foreach (var c in s)
-        {
-            sb.Append(c is '/' or '\\' or ':' or '*' or '?' or '"' or '<' or '>' or '|' or ' ' ? '_' : c);
-        }
-        return sb.ToString();
     }
 
     /// <summary>

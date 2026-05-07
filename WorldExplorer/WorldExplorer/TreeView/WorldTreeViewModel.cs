@@ -34,7 +34,12 @@ public class WorldTreeViewModel : TreeViewItemViewModel
     {
         _world.Load();
 
-        if (_world.WorldLmp != null)
+        if (_world.WorldDdf != null && _world.WorldLmp == null)
+        {
+            // .DDF was opened directly — show the entity-centric view.
+            Children.Add(new DdfTreeViewModel(_world, this, _world.WorldDdf));
+        }
+        else if (_world.WorldLmp != null)
         {
             Children.Add(new LmpTreeViewModel(_world, this, _world.WorldLmp));
         }
