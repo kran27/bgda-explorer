@@ -107,23 +107,28 @@ public class DdfFile
         // an SDB hash. This avoids attribution leakage between unrelated
         // entities that share a record neighbourhood.
         var entityToHashes = new Dictionary<string, HashSet<uint>>();
-        // Across all shipped BoS data, the *canonical* asset offsets each
-        // carry a deterministic content type:
-        //   +0x2c = mesh, +0x30 = texture, +0x38 = sound.
-        // The other slots in the 0x60-byte window (+0x34, +0x3c, +0x40, +0x44)
-        // sometimes carry secondary asset refs but more often leak attribution
-        // from wrapper / stub records that *contain* an inner asset record at
-        // a non-zero offset (e.g. "Bottle Caps" at @0x4a1c0 has its inner
-        // 'cw_mutant_telephonepole_2600' record starting at +0x14, whose own
-        // +0x2c happens to coincide with the wrapper's +0x40). Trusting only
-        // the canonical positions makes the inner record win, which is what
-        // the engine resolves to.
-        var schema = new (int Offset, AssetRole Role)[]
-        {
-            (0x2c, AssetRole.Mesh),
-            (0x30, AssetRole.Texture),
-            (0x38, AssetRole.Sound),
-        };
+        // Asset records hold a *series of pair slots*, each occupying 8 bytes:
+        //   pair A: +0x2c (mesh-or-sound) +0x30 (texture-or-zero)
+        //   pair B: +0x38 (mesh-or-sound) +0x3c (texture-or-zero)
+        //   pair C: +0x44 (mesh-or-sound) +0x48 (texture-or-zero)   [rare]
+        // separated by zero u32s at +0x34, +0x40.
+        //
+        // Within a pair, the rule is:
+        //   - both halves hold CLP hashes  →  (mesh, texture) for that body
+        //                                     part / variant
+        //   - first half holds a CLP hash, second is zero  →  the first half
+        //                                     is a secondary asset (sound for
+        //                                     items, sometimes an icon)
+        //
+        // For most item records only pair A is filled and pair B's first
+        // half holds a sound. For characters with multiple body parts (Nadia
+        // body + hair, etc.) both pair A and pair B carry mesh+texture pairs.
+        //
+        // The other lone slots (+0x34, +0x40, +0x44 alone) sometimes pick up
+        // refs from wrapper/stub records whose inner record happens to
+        // coincide. Don't attribute through those — see the "Bottle Caps"
+        // wrapper at @0x4a1c0 → cw_mutant_telephonepole_2600 case.
+        var pairOffsets = new[] { (0x2c, 0x30), (0x38, 0x3c), (0x44, 0x48) };
 
         for (var off = 16; off + 0x48 <= FileData.Length; off += 4)
         {
@@ -134,53 +139,57 @@ public class DdfFile
             }
 
             HashSet<uint>? bag = null;
-            uint meshInThisRecord = 0;
-            uint textureInThisRecord = 0;
-            foreach (var (rel, role) in schema)
+            foreach (var (meshOff, texOff) in pairOffsets)
             {
-                var assetOff = off + rel;
-                if (assetOff + 4 > FileData.Length) break;
-                var candidate = BitConverter.ToUInt32(FileData, assetOff);
-                if (candidate == 0 || sdbNames.ContainsKey(candidate)) continue;
-                if (!knownClpHashes.Contains(candidate)) continue;
+                if (off + texOff + 4 > FileData.Length) break;
+                var meshCandidate = BitConverter.ToUInt32(FileData, off + meshOff);
+                var texCandidate = BitConverter.ToUInt32(FileData, off + texOff);
 
-                if (bag == null && !entityToHashes.TryGetValue(entityName, out bag))
-                {
-                    bag = new HashSet<uint>();
-                    entityToHashes[entityName] = bag;
-                }
-                bag!.Add(candidate);
-                if (!_nameByClpHash.ContainsKey(candidate))
-                {
-                    _nameByClpHash[candidate] = entityName;
-                }
-                // First role wins — if a hash is referenced from multiple
-                // records, the first attribution we see is what the engine
-                // most likely uses for it.
-                if (!_roleByClpHash.ContainsKey(candidate))
-                {
-                    _roleByClpHash[candidate] = role;
-                }
+                var meshIsClp = meshCandidate != 0 && !sdbNames.ContainsKey(meshCandidate)
+                                && knownClpHashes.Contains(meshCandidate);
+                var texIsClp = texCandidate != 0 && !sdbNames.ContainsKey(texCandidate)
+                               && knownClpHashes.Contains(texCandidate);
 
-                if (role == AssetRole.Mesh) meshInThisRecord = candidate;
-                else if (role == AssetRole.Texture) textureInThisRecord = candidate;
-            }
-
-            // Bind the mesh and texture from THIS record to each other.
-            // Distinct records describing different variants of the same
-            // entity (e.g. Bottle Caps' multiple item drops) each get their
-            // own mesh↔texture pair, instead of all colliding into a single
-            // "first match" via entity-name search.
-            if (meshInThisRecord != 0 && textureInThisRecord != 0)
-            {
-                if (!_textureForMesh.ContainsKey(meshInThisRecord))
-                    _textureForMesh[meshInThisRecord] = textureInThisRecord;
-                if (!_meshForTexture.ContainsKey(textureInThisRecord))
-                    _meshForTexture[textureInThisRecord] = meshInThisRecord;
+                if (meshIsClp && texIsClp)
+                {
+                    // Full (mesh, texture) pair — bind them to each other.
+                    Attribute(meshCandidate, AssetRole.Mesh, entityName, ref bag, entityToHashes);
+                    Attribute(texCandidate, AssetRole.Texture, entityName, ref bag, entityToHashes);
+                    if (!_textureForMesh.ContainsKey(meshCandidate))
+                        _textureForMesh[meshCandidate] = texCandidate;
+                    if (!_meshForTexture.ContainsKey(texCandidate))
+                        _meshForTexture[texCandidate] = meshCandidate;
+                }
+                else if (meshIsClp && texCandidate == 0)
+                {
+                    // Lone first-half slot with a zero second half — treat as
+                    // a secondary asset (sound for items, occasionally icon).
+                    Attribute(meshCandidate, AssetRole.Sound, entityName, ref bag, entityToHashes);
+                }
+                // Anything else (texture-only, or non-zero non-CLP halves)
+                // we skip — those are stat fields or wrapper-record bleed.
             }
         }
 
-        // Materialise sibling lists.
+        // (sibling materialisation follows)
+        FinishSiblings(entityToHashes);
+    }
+
+    private void Attribute(uint candidate, AssetRole role, string entityName,
+        ref HashSet<uint>? bag, Dictionary<string, HashSet<uint>> entityToHashes)
+    {
+        if (bag == null && !entityToHashes.TryGetValue(entityName, out bag))
+        {
+            bag = new HashSet<uint>();
+            entityToHashes[entityName] = bag;
+        }
+        bag!.Add(candidate);
+        if (!_nameByClpHash.ContainsKey(candidate)) _nameByClpHash[candidate] = entityName;
+        if (!_roleByClpHash.ContainsKey(candidate)) _roleByClpHash[candidate] = role;
+    }
+
+    private void FinishSiblings(Dictionary<string, HashSet<uint>> entityToHashes)
+    {
         foreach (var (_, hashes) in entityToHashes)
         {
             var list = hashes.ToList();
