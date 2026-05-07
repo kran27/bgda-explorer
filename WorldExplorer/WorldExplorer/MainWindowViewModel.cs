@@ -360,10 +360,17 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 WorldFileDecoder decoder = World.EngineVersion == EngineVersion.BrotherhoodOfSteel
                     ? new WorldFileV1BoSDecoder()
                     : new WorldFileV1Decoder();
-                // Derive the level texture atlas. Cat-8 entity names are
-                // upper-case level IDs ("BAR", "MILL_3"); the matching tex
-                // entry is "<lower>.tex" and lives in the level's _T.CLP.
-                var texFile = LoadBosLevelTex(entity.Name) ?? World.WorldTex;
+                // Derive the level texture atlas from the *archive* the world
+                // file lives in (e.g. LAB_1B.CLP → lab_1b.tex / LAB_1B_T.CLP),
+                // NOT from the entity SDB name. With our recursive SDB scan,
+                // an entity like "Vault Lab 1, mutated" (which lives in
+                // GTEXT.SDB) wins the SDB lookup race over the level ID
+                // "LAB_1b" (in LAB_1B.SDB / GLOBAL.SDB), and the localized
+                // display name doesn't match any CLP archive name. Falling
+                // back to the CLP filename matches what the .world dispatch
+                // does and finds the right atlas.
+                var levelKey = Path.GetFileNameWithoutExtension(loc.Clp.Name);
+                var texFile = LoadBosLevelTex(levelKey) ?? World.WorldTex;
                 var worldData = decoder.Decode(data, texFile);
                 World.WorldData = worldData;
                 _levelViewModel.WorldNode = null;

@@ -160,6 +160,14 @@ public static class Conversions
         }
 
         model.Material = dm;
+        // Render the underside of each triangle too. PS2 character meshes use
+        // mixed winding orders across their VIF chunks (named-NPC bodies that
+        // have multiple sub-meshes show wrong-side shading otherwise — the
+        // "bad normals" symptom on Cyrus, Nadia, Cain, Patty, Rhombus, Vault
+        // Dweller and similar 7+ body-part characters). Single-chunk
+        // characters (Bar Patron etc.) and props that already render fine
+        // aren't visually affected by also rendering their back faces.
+        model.BackMaterial = dm;
         return model;
     }
 

@@ -172,9 +172,19 @@ public class World
     {
         if (EngineVersion != EngineVersion.BrotherhoodOfSteel || WorldDdf == null) return;
 
+        // Load every CLP under the BoS data root (recursive). This makes the
+        // ALL.DDF cat-8 entries resolve their level-world hashes — those live
+        // in per-level archives like C1/BAR/BAR.CLP, C3/RINS_3/RINS_3.CLP,
+        // etc. — and surfaces other cross-archive references too (e.g. PC/
+        // animation archives that ALL.DDF entities point at). Top-level-only
+        // loading was leaving cat-8 entities with empty asset lists and
+        // skipping any reference outside the immediate directory.
+        var rootDir = FindBosRoot(DataPath) ?? DataPath;
         var clpHashes = new HashSet<uint>();
-        foreach (var path in Directory.EnumerateFiles(DataPath, "*.CLP", SearchOption.TopDirectoryOnly))
+        var loadedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in Directory.EnumerateFiles(rootDir, "*.CLP", SearchOption.AllDirectories))
         {
+            if (!loadedPaths.Add(Path.GetFullPath(path))) continue;
             try
             {
                 if (new FileInfo(path).Length > 200_000_000) continue;
@@ -194,7 +204,15 @@ public class World
             catch { }
         }
 
-        var sdbNames = LoadAllSdbNames(new[] { DataPath });
+        // Same expanded scope for SDB names — entity names live in level-
+        // specific SDBs that the top-level scan wouldn't pick up.
+        var sdbDirs = new List<string> { rootDir };
+        try
+        {
+            sdbDirs.AddRange(Directory.EnumerateDirectories(rootDir, "*", SearchOption.AllDirectories));
+        }
+        catch { }
+        var sdbNames = LoadAllSdbNames(sdbDirs);
         if (sdbNames.Count == 0) return;
 
         WorldDdf.Parse(sdbNames, clpHashes);
@@ -234,26 +252,90 @@ public class World
         return dirs;
     }
 
+    /// <summary>
+    /// Find the BoS data root by walking up looking for ALL.DDF (the marker
+    /// file that lives directly in /DATA/). Returns null if no ancestor
+    /// contains ALL.DDF — caller falls back to the start dir.
+    /// </summary>
+    private static string? FindBosRoot(string startDir)
+    {
+        var dir = startDir;
+        for (var i = 0; i < 8 && !string.IsNullOrEmpty(dir); i++)
+        {
+            if (File.Exists(Path.Combine(dir, "ALL.DDF"))) return dir;
+            dir = Path.GetDirectoryName(dir);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Two-pass SDB load: first the non-GTEXT files (internal IDs from
+    /// GLOBAL.SDB and per-level SDBs), then GTEXT.* (translated display
+    /// names). 63 hashes intentionally appear in both namespaces — same
+    /// level/character has both an internal ID like "LAB_1b" and a player-
+    /// facing name like "Vault Lab 1, mutated". When both exist for the
+    /// same hash we combine them as "INTERNAL — Display" so the explorer
+    /// surfaces both. Internal-only or display-only entries pass through
+    /// unmodified.
+    /// </summary>
     private static Dictionary<uint, string> LoadAllSdbNames(IEnumerable<string> dirs)
     {
-        var sdbNames = new Dictionary<uint, string>();
+        var sdbList = new List<string>();
         foreach (var d in dirs)
         {
             foreach (var sdbPath in Directory.EnumerateFiles(d, "*.SDB", SearchOption.TopDirectoryOnly))
             {
-                try
-                {
-                    var sdb = SdbFile.Read(sdbPath);
-                    sdb.ReadDirectory();
-                    foreach (var rec in sdb.Records)
-                    {
-                        if (rec.Text != null) sdbNames.TryAdd(rec.Hash, rec.Text);
-                    }
-                }
-                catch { }
+                sdbList.Add(sdbPath);
             }
         }
-        return sdbNames;
+        // Order: non-GTEXT first (internal IDs), then GTEXT (display names).
+        sdbList.Sort((a, b) =>
+        {
+            var ag = Path.GetFileName(a).StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
+            var bg = Path.GetFileName(b).StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
+            return ag.CompareTo(bg);
+        });
+
+        var internalNames = new Dictionary<uint, string>();
+        var displayNames = new Dictionary<uint, string>();
+        foreach (var sdbPath in sdbList)
+        {
+            var isGtext = Path.GetFileName(sdbPath).StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                var sdb = SdbFile.Read(sdbPath);
+                sdb.ReadDirectory();
+                foreach (var rec in sdb.Records)
+                {
+                    if (rec.Text == null) continue;
+                    var bucket = isGtext ? displayNames : internalNames;
+                    bucket.TryAdd(rec.Hash, rec.Text);
+                }
+            }
+            catch { }
+        }
+
+        // Merge: prefer internal as the primary name, append display in
+        // parens when distinct. Display-only entries (no internal match)
+        // come through with just the display name.
+        var combined = new Dictionary<uint, string>();
+        foreach (var (h, intern) in internalNames)
+        {
+            if (displayNames.TryGetValue(h, out var disp) &&
+                !string.Equals(intern, disp, StringComparison.OrdinalIgnoreCase))
+            {
+                combined[h] = $"{intern} — {disp}";
+            }
+            else
+            {
+                combined[h] = intern;
+            }
+        }
+        foreach (var (h, disp) in displayNames)
+        {
+            combined.TryAdd(h, disp);
+        }
+        return combined;
     }
 
     private static string? RoleToExtension(DdfFile.AssetRole role) => role switch
