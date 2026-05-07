@@ -82,7 +82,17 @@ public class DdfFile
         Texture,
         /// <summary>Type 3 — sound (.vag, custom SFX, ADPCM).</summary>
         Sound,
-        /// <summary>Types 5–7 — cat-8 subsystems we haven't fully decoded.</summary>
+        /// <summary>
+        /// Types 5–7 — vestigial cat-8 subsystem slots. The engine has
+        /// post-load handlers for them (sub_1A8E88 for type 5, sub_195E78 for
+        /// type 7) but every type-5/6/7 hash in shipped DDFs resolves to
+        /// nothing: 0/245 unique references match any CLP entry, and 0/245
+        /// match any SDB entity hash. Cat-8's only live asset is its slot-7
+        /// texture, which is the same 64×64 placeholder (hash 0xE897E1CA)
+        /// bundled identically into every level CLP. Treat these as cut
+        /// content — there's no extension to give them because the data
+        /// they'd be doesn't exist.
+        /// </summary>
         Other,
     }
 
@@ -144,6 +154,11 @@ public class DdfFile
             { 3,  new[] { 1, 2, 2, 3 } },
             // Cat 4 (sub_6B060): walks E5B14..E5B3C — 10 slots.
             { 4,  new[] { 1, 2, 2, 1, 2, 2, 1, 2, 3, 3 } },
+            // Cat 5: particle emitters (fireemitter, sparks emitter, steam_*,
+            // toxicsmoke_*, etc.). Pure parameter records — no resolver in the
+            // engine's switch, no asset references. 6,070 records across all
+            // shipped DDFs. Surfaced as entities with empty Assets list.
+            { 5,  Array.Empty<int>() },
             // Cat 6 (sub_6B0A0): walks E5B34..E5B40 — only 3 slots (sound, sound, texture).
             // Easy mistake: E5B40 is also the start of cat 1's table, but that's
             // the *exclusive bound* here, not the start. Reading bytes directly
@@ -151,6 +166,18 @@ public class DdfFile
             { 6,  new[] { 3, 3, 2 } },
             // Cat 8 (sub_6B4A0): walks E5BB4..E5BDC — 10 slots, includes sentinels.
             { 8,  new[] { 5, 6, 2, 7, -1, 9, 9, 2, 2, 2 } },
+            // Cat 9: AI behavior types (RangedBasic, MeleeBasic, DuckAndCover,
+            // Player, NPC, Driving, Kamikaze, named-character AIs like
+            // WastelandMayorAI). Pure parameter records — 1,210 across shipped
+            // DDFs.
+            { 9,  Array.Empty<int>() },
+            // Cat 10: dynamic light definitions (gen_light_green_*, world_light_default,
+            // light_muzzle_blast_small, fireballlight). 543 records, no assets.
+            { 10, Array.Empty<int>() },
+            // Cat 11: beam / lightning / laser effects (Flame, laser_blue,
+            // lightning_arc_*, lightning_trap_*, body_lightning). 391 records,
+            // no assets.
+            { 11, Array.Empty<int>() },
             // Cat 12 (sub_6B0E0): walks E5B78..E5B9C — 9 slots.
             { 12, new[] { 1, 2, 2, 1, 1, 1, 2, 2, 2 } },
             // Cat 13 (sub_6B060): same resolver as cat 4.
@@ -218,6 +245,23 @@ public class DdfFile
             // Walk the asset-ref array in the engine's order, attributing each
             // slot using the category's type table. Pair each mesh with the
             // first texture that follows it before the next mesh.
+            //
+            // Cat 12 (debris) special-case: the schema lists 4 meshes and 5
+            // textures, but the meshes are interchangeable LOD/variant pieces
+            // and they all share a single texture. Pre-find that lone texture
+            // and pair every mesh in the record to it instead of doing the
+            // walk-pairing.
+            uint? cat12SharedTex = null;
+            if (category == 12)
+            {
+                for (var s = 0; s < typeTable.Length; s++)
+                {
+                    if (typeTable[s] != 2) continue;
+                    var v = BitConverter.ToUInt32(FileData, assetArrayStart + s * 4);
+                    if (v != 0 && knownClpHashes.Contains(v)) { cat12SharedTex = v; break; }
+                }
+            }
+
             uint? pendingMesh = null;
             for (var slot = 0; slot < typeTable.Length; slot++)
             {
@@ -232,7 +276,17 @@ public class DdfFile
                 uint? paired = null;
                 if (role == AssetRole.Mesh)
                 {
-                    pendingMesh = slotValue;
+                    if (cat12SharedTex is uint sharedTex)
+                    {
+                        // Cat-12 override: every mesh maps to the one shared texture.
+                        paired = sharedTex;
+                        if (!_textureForMesh.ContainsKey(slotValue)) _textureForMesh[slotValue] = sharedTex;
+                        if (!_meshForTexture.ContainsKey(sharedTex)) _meshForTexture[sharedTex] = slotValue;
+                    }
+                    else
+                    {
+                        pendingMesh = slotValue;
+                    }
                 }
                 else if (role == AssetRole.Texture && pendingMesh is uint mesh)
                 {
@@ -246,7 +300,11 @@ public class DdfFile
                 entity.Assets.Add(new EntityAsset(slotValue, role, paired));
             }
 
-            if (entity.Assets.Count > 0) _entities.Add(entity);
+            // Add the entity even when it has no assets — cats 5/9/10/11 are
+            // parameter-only records (particle emitters, AI behaviors, lights,
+            // beam effects) that don't reference any CLP entries but are still
+            // worth showing in the tree.
+            _entities.Add(entity);
         }
 
         FinishSiblings(entityToHashes);

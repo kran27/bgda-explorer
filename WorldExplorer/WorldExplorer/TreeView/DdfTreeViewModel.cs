@@ -4,30 +4,63 @@ using System.Linq;
 namespace WorldExplorer.TreeView;
 
 /// <summary>
-/// Root tree node for a DDF: lists every entity (asset record) in the file.
-/// Each child expands to the entity's referenced CLP assets.
+/// Helpers for grouping a DDF's entities by category in the tree. Exposed as
+/// static so the World root node can host the category folders directly,
+/// without an intermediate DDF wrapper that just duplicates the file name.
 /// </summary>
-public class DdfTreeViewModel : TreeViewItemViewModel
+public static class DdfTreeBuilder
 {
-    private readonly World _world;
-    private readonly DdfFile _ddf;
-
-    public DdfFile DdfFile => _ddf;
-
-    public DdfTreeViewModel(World world, TreeViewItemViewModel parent, DdfFile ddf)
-        : base(ddf.Name, parent, true)
+    /// <summary>Add one folder per populated category to <paramref name="parent"/>.</summary>
+    public static void AddCategoryFolders(TreeViewItemViewModel parent, World world, DdfFile ddf)
     {
-        _world = world;
-        _ddf = ddf;
+        var byCat = ddf.Entities
+            .GroupBy(e => e.CategoryCode)
+            .OrderBy(g => g.Key);
+        foreach (var group in byCat)
+        {
+            var folder = new DdfCategoryTreeViewModel(parent, CategoryLabel(group.Key), group.Key, group.Count());
+            foreach (var entity in group.OrderBy(e => e.Name).ThenBy(e => e.RecordOffset))
+            {
+                folder.Children.Add(new DdfEntityTreeViewModel(world, folder, entity));
+            }
+            parent.Children.Add(folder);
+        }
     }
 
-    protected override void LoadChildren()
+    /// <summary>
+    /// Cat code → human-friendly label. Categories we haven't fully identified
+    /// semantically render as "Cat N".
+    /// </summary>
+    public static string CategoryLabel(int cat) => cat switch
     {
-        // Group by entity name + record offset so multiple entities with the
-        // same SDB hash (rare but possible) and ordering stay stable.
-        foreach (var entity in _ddf.Entities.OrderBy(e => e.Name).ThenBy(e => e.RecordOffset))
-        {
-            Children.Add(new DdfEntityTreeViewModel(_world, this, entity));
-        }
+        0 => "Cat 0 — Characters",
+        1 => "Cat 1 — Props",
+        2 => "Cat 2 — Weapons",
+        3 => "Cat 3 — Armor",
+        4 => "Cat 4 — Projectiles",
+        5 => "Cat 5 — Particle Emitters",
+        6 => "Cat 6 — Effects",
+        8 => "Cat 8 — Level / Container",
+        9 => "Cat 9 — AI Behaviors",
+        10 => "Cat 10 — Dynamic Lights",
+        11 => "Cat 11 — Beam / Lightning Effects",
+        12 => "Cat 12 — Debris",
+        13 => "Cat 13 — Mines / Traps",
+        _ => $"Cat {cat}",
+    };
+}
+
+/// <summary>
+/// Intermediate tree node grouping entities of one category. Inert — selecting
+/// it doesn't trigger any rendering or log output; it's just a folder.
+/// </summary>
+public class DdfCategoryTreeViewModel : TreeViewItemViewModel
+{
+    public int CategoryCode { get; }
+
+    public DdfCategoryTreeViewModel(TreeViewItemViewModel parent, string label, int categoryCode, int count)
+        : base($"{label}  ({count})", parent, false)
+    {
+        CategoryCode = categoryCode;
     }
 }

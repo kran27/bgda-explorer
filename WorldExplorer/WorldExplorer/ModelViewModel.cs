@@ -18,9 +18,12 @@ using HelixToolkit.Wpf;
 using JetBlackEngineLib.Data.Animation;
 using JetBlackEngineLib.Data.Models;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using WorldExplorer.DataExporters;
@@ -115,7 +118,22 @@ public class ModelViewModel : BaseViewModel
             _modelView.viewport.Children.Remove(_modelView.modelObject);
             if (_model != null)
             {
-                InfoText = $"Model Bounds: {_model.Content.Bounds}";
+                // Composite containers (multi-mesh entities) have Content == null
+                // and use Children instead — a single .Content.Bounds dereference
+                // crashed on every entity click. Compute a union of child bounds
+                // when Content is missing.
+                var bounds = _model.Content?.Bounds;
+                if (bounds == null)
+                {
+                    var rect = Rect3D.Empty;
+                    foreach (var child in _model.Children)
+                    {
+                        if (child is ModelVisual3D mv && mv.Content != null)
+                            rect.Union(mv.Content.Bounds);
+                    }
+                    bounds = rect;
+                }
+                InfoText = $"Model Bounds: {bounds}";
                 _modelView.modelObject = _model;
                 _modelView.viewport.Children.Add(_modelView.modelObject);
             }
@@ -153,6 +171,39 @@ public class ModelViewModel : BaseViewModel
     public ModelViewModel(MainWindowViewModel mainViewWindow) : base(mainViewWindow)
     {
         _modelView = MainViewModel.MainWindow.modelView;
+    }
+
+    /// <summary>
+    /// Render multiple meshes as a single composite model — used for DDF
+    /// entities (cat 0 in particular) where one entity bundles several
+    /// (mesh, texture) pairs (e.g. body + hair). Each part keeps its own
+    /// texture material instead of being merged into one geometry. The
+    /// underlying VifModel is set to the union of all mesh lists so camera
+    /// framing and the export hooks see the whole composite.
+    /// </summary>
+    public void SetCompositeModel(IList<(Model vif, BitmapSource? texture)> parts)
+    {
+        AnimData = null;
+        if (parts.Count == 0)
+        {
+            VifModel = null;
+            return;
+        }
+
+        // Combined VifModel for camera bounds + ShowExportForPosedModel.
+        var allMeshes = parts.SelectMany(p => p.vif.MeshList).ToList();
+        _vifModel = new Model(allMeshes);
+
+        ModelVisual3D container = new();
+        foreach (var (vif, tex) in parts)
+        {
+            var part = (GeometryModel3D)Conversions.CreateModel3D(vif.MeshList, tex, null, 0);
+            container.Children.Add(new ModelVisual3D { Content = part });
+        }
+
+        // Bypass UpdateModel since we built the visual ourselves.
+        Model = container;
+        OnPropertyChanged(nameof(VifModel));
     }
 
     private void UpdateModel(bool updateCamera)

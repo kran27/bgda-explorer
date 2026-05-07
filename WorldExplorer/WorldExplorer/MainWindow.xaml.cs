@@ -80,11 +80,14 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Position the camera at a 3/4 angle in front of the model's centroid.
-    /// BoS character meshes (the most common subject) face -Y in world space,
-    /// so the camera sits at -Y +Z relative to centroid and looks back along
-    /// (+Y, -Z). Writes the camera properties directly so nothing else (the
-    /// model viewer's own UpdateCamera, ZoomExtents, etc.) can override it.
+    /// Position the camera at a 3/4 angle in front of the model's centroid,
+    /// looking at the widest face. We choose between viewing along -Y or
+    /// along -X depending on which gives the larger visible projection
+    /// (sizeX·sizeZ vs sizeY·sizeZ). Characters end up viewed from -Y
+    /// (front), but a long object oriented along Y (e.g. a rifle) gets
+    /// viewed from -X so its length runs across the screen instead of
+    /// pointing at the camera. Writes camera properties directly so
+    /// downstream code (UpdateCamera, ZoomExtents, …) can't override.
     /// </summary>
     private static void FrameModel(HelixViewport3D viewport, JetBlackEngineLib.Data.Models.Model? model)
     {
@@ -104,10 +107,26 @@ public partial class MainWindow : Window
         var cz = bounds.Z + bounds.SizeZ / 2;
         var span = Math.Max(bounds.SizeX, Math.Max(bounds.SizeY, bounds.SizeZ));
         if (span < 1) span = 1;
-
         var distance = span * 2.0;
-        cam.Position = new Point3D(cx, cy - distance, cz + span * 0.4);
-        cam.LookDirection = new Vector3D(0, distance, -span * 0.4);
+        var elevation = span * 0.4;
+
+        // Compare visible-face area for each candidate view axis. Whichever
+        // gives the larger XZ-or-YZ rectangle wins.
+        var areaFromY = bounds.SizeX * bounds.SizeZ;
+        var areaFromX = bounds.SizeY * bounds.SizeZ;
+
+        if (areaFromX > areaFromY)
+        {
+            // Camera at -X looking toward +X.
+            cam.Position = new Point3D(cx - distance, cy, cz + elevation);
+            cam.LookDirection = new Vector3D(distance, 0, -elevation);
+        }
+        else
+        {
+            // Camera at -Y looking toward +Y (default for characters).
+            cam.Position = new Point3D(cx, cy - distance, cz + elevation);
+            cam.LookDirection = new Vector3D(0, distance, -elevation);
+        }
         cam.UpDirection = new Vector3D(0, 0, 1);
         if (cam is OrthographicCamera oc) oc.Width = span * 1.4;
     }

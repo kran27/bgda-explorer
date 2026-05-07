@@ -26,6 +26,9 @@ public class WorldTreeViewModel : TreeViewItemViewModel
         : base(world.Name, null, true)
     {
         _world = world;
+        // Auto-expand the root: triggers LoadChildren immediately so the user
+        // sees the file's contents without having to click the disclosure.
+        IsExpanded = true;
     }
 
     public World World => _world;
@@ -36,8 +39,10 @@ public class WorldTreeViewModel : TreeViewItemViewModel
 
         if (_world.WorldDdf != null && _world.WorldLmp == null)
         {
-            // .DDF was opened directly — show the entity-centric view.
-            Children.Add(new DdfTreeViewModel(_world, this, _world.WorldDdf));
+            // .DDF was opened directly — show the entity-centric view inline,
+            // with category folders directly under the root. Avoids the
+            // ALL.DDF → ALL.DDF → categories double-nesting.
+            DdfTreeBuilder.AddCategoryFolders(this, _world, _world.WorldDdf);
         }
         else if (_world.WorldLmp != null)
         {

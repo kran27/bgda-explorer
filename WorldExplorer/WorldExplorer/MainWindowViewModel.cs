@@ -193,28 +193,131 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Selecting a DDF entity renders its mesh by routing to OnLmpEntrySelected
-    /// with the entity's mesh asset. The .vif dispatch already handles texture
-    /// pairing via TexturePairResolver, which the DDF parser populated, so the
-    /// right texture appears alongside the model with no extra work here.
-    /// When the entity has no mesh — sound-only, or its CLP isn't loaded — we
-    /// clear the viewer state so the previous entity's model doesn't linger.
+    /// Selecting a DDF entity:
+    ///   - Renders all of its Mesh assets in the model viewport (each mesh
+    ///     keeps its DDF-paired texture). Multi-mesh entities — most commonly
+    ///     cat-0 characters with separate body and hair — show every part
+    ///     instead of the first one only.
+    ///   - Writes a structured record dump to the Log tab so parameter-only
+    ///     categories (cat 5 emitters, cat 9 AI, cat 10 lights, cat 11 beam
+    ///     effects) and the per-entity floats on asset-bearing categories are
+    ///     legible. The log is populated regardless of whether the viewport
+    ///     has anything to render.
+    ///   - Clears the viewport when nothing renderable is available, so the
+    ///     previous entity's model doesn't linger.
     /// </summary>
     private void OnDdfEntitySelected(DdfEntityTreeViewModel entityNode)
     {
         if (World == null) return;
-        var meshAsset = entityNode.Entity.Assets.FirstOrDefault(a => a.Role == DdfFile.AssetRole.Mesh);
-        if (meshAsset != null && World.AssetIndex.TryGetValue(meshAsset.Hash, out var loc))
+        var entity = entityNode.Entity;
+
+        // Collect every Mesh asset that resolves to a loaded CLP entry.
+        // Cat 12 (debris) records list 4 interchangeable mesh variants; render
+        // only the first to keep the view legible — the parser already pairs
+        // every cat-12 mesh to the same texture, so picking any one looks the
+        // same as picking the canonical first variant.
+        var meshParts = new List<(JetBlackEngineLib.Data.Models.Model vif, BitmapSource? texture)>();
+        var renderedLabels = new List<string>();
+        var firstMeshOnly = entity.CategoryCode == 12;
+        foreach (var asset in entity.Assets)
         {
-            OnLmpEntrySelected(new LmpEntryTreeViewModel(World, entityNode, loc.Clp, loc.EntryLabel));
-            return;
+            if (asset.Role != DdfFile.AssetRole.Mesh) continue;
+            if (!World.AssetIndex.TryGetValue(asset.Hash, out var loc)) continue;
+            var clp = loc.Clp;
+            if (!clp.Directory.TryGetValue(loc.EntryLabel, out var meshEntry)) continue;
+
+            BitmapSource? texture = null;
+            var pairedTex = FindSiblingTex(clp, loc.EntryLabel);
+            if (pairedTex != null)
+                texture = TexDecoder.Decode(clp.FileData.AsSpan().Slice(pairedTex.StartOffset, pairedTex.Length));
+
+            var uvW = texture?.PixelWidth ?? 256;
+            var uvH = texture?.PixelHeight ?? 256;
+            var vif = new JetBlackEngineLib.Data.Models.Model(VifDecoder.Decode(
+                new StringLogger(),
+                clp.FileData.AsSpan().Slice(meshEntry.StartOffset, meshEntry.Length),
+                uvW, uvH));
+
+            meshParts.Add((vif, texture));
+            renderedLabels.Add(loc.EntryLabel);
+            if (firstMeshOnly) break;
         }
 
-        SelectedNodeImage = null;
-        _modelViewModel.Texture = null;
-        _modelViewModel.AnimData = null;
-        _modelViewModel.VifModel = null;
-        MainWindow.SetViewportText(1, entityNode.Entity.Name + " (no model)", "");
+        if (meshParts.Count > 0)
+        {
+            // Show the first part's texture in the texture tab as a hint.
+            SelectedNodeImage = meshParts[0].texture as System.Windows.Media.Imaging.WriteableBitmap;
+            _modelViewModel.SetCompositeModel(meshParts);
+            MainWindow.SetViewportText(1, entity.Name,
+                meshParts.Count > 1 ? $"{meshParts.Count} meshes: {string.Join(", ", renderedLabels)}" : "");
+            MainWindow.tabControl.SelectedIndex = 1; // Model View
+            MainWindow.ResetCamera();
+        }
+        else
+        {
+            SelectedNodeImage = null;
+            _modelViewModel.Texture = null;
+            _modelViewModel.AnimData = null;
+            _modelViewModel.VifModel = null;
+            MainWindow.SetViewportText(1, entity.Name + " (no model)", "");
+        }
+
+        LogText = DumpEntityRecord(entity);
+    }
+
+    /// <summary>
+    /// Build a human-readable text dump of a DDF entity record: header info,
+    /// asset list with names where known, and the populated float / int slots
+    /// in the record body. Used as the Log-tab preview when an entity is
+    /// selected so parameter-only records (emitters, AI, lights, beam effects)
+    /// are legible and asset-bearing entities also expose their gameplay
+    /// stats.
+    /// </summary>
+    private string DumpEntityRecord(DdfFile.EntityRecord entity)
+    {
+        var sb = new StringBuilder();
+        sb.AppendFormat("Entity: {0}\n", entity.Name);
+        sb.AppendFormat("  SDB hash:      0x{0:X8}\n", entity.SdbHash);
+        sb.AppendFormat("  Category:      {0}\n", entity.CategoryCode);
+        sb.AppendFormat("  Record offset: 0x{0:X}\n", entity.RecordOffset);
+
+        if (entity.Assets.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("Assets:");
+            foreach (var a in entity.Assets)
+            {
+                var name = BosNameTable.Get(a.Hash);
+                var nameStr = name != null ? $"  '{name}'" : "";
+                var pair = a.PairedHash.HasValue ? $"  paired→0x{a.PairedHash.Value:X8}" : "";
+                sb.AppendFormat("  {0,-9} 0x{1:X8}{2}{3}\n", a.Role, a.Hash, nameStr, pair);
+            }
+        }
+
+        var ddf = World?.WorldDdf;
+        if (ddf != null && entity.RecordOffset + 0x14 <= ddf.FileData.Length)
+        {
+            // Get total size from +0x10
+            var size = (int)BitConverter.ToUInt32(ddf.FileData, entity.RecordOffset + 0x10);
+            // Clamp to the file
+            size = Math.Min(size, ddf.FileData.Length - entity.RecordOffset);
+            if (size > 0x14)
+            {
+                sb.AppendLine();
+                sb.AppendFormat("Record body ({0} bytes total, showing non-zero u32/float pairs from +0x14):\n", size);
+                for (var off = 0x14; off + 4 <= size; off += 4)
+                {
+                    var u = BitConverter.ToUInt32(ddf.FileData, entity.RecordOffset + off);
+                    if (u == 0) continue;
+                    var f = BitConverter.ToSingle(ddf.FileData, entity.RecordOffset + off);
+                    var i = (int)u;
+                    // Float interpretation: only show if it's a "reasonable" magnitude
+                    var floatStr = (Math.Abs(f) > 0.0001f && Math.Abs(f) < 1e10f) ? f.ToString("F4") : "—";
+                    sb.AppendFormat("  +0x{0:X3}  u32=0x{1:X8} ({2,11})  float={3}\n", off, u, i, floatStr);
+                }
+            }
+        }
+        return sb.ToString();
     }
 
     private void OnLmpEntrySelected(LmpEntryTreeViewModel lmpEntry)
