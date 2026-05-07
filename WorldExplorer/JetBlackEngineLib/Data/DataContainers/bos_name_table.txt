@@ -8,6 +8,7 @@
 04DAE140 cain_rock.hsh
 051D1E1E nadia_knif.hsh
 057ECD0F 2241_homemade_pipe_rifle.tex
+07E2E77D hit_flesh_pierce.vag
 092F1FFB vtwarehouse_1.hsh
 092F4FB1 vtwarehouse_1.tex
 09A214AA vtwarehouse_2.tex
@@ -20,6 +21,7 @@
 0A7C8F75 fleshchunkshvy01.vag
 0AE612A1 pinup.smg
 0AE67615 pinup.bin
+0BA3013F pit.vat
 0BA3192D pit.tex
 0BA349E7 pit.hsh
 0C40725B 17_desertsoldier.tex
@@ -43,6 +45,7 @@
 182A28BE arrowright.tex
 19057057 cyrus_rock.hsh
 19D28386 ruins_boss.hsh
+19D2CD36 ruins_boss.vat
 19D2D95C ruins_boss.tex
 19FD1F0A 2283_plasma_cannon.tex
 1BD3A7F2 2043_tesla_cleaver.tex
@@ -62,6 +65,7 @@
 1EB0D6F5 11_weapon_explosives.tex
 1F14317A mutant_transform_mix.va1
 1F4A227A lab_2a.tex
+1F4A3EE8 lab_2a.vat
 1F4A77B0 lab_2a.hsh
 1F762D39 lab_2b.tex
 1F76BF9B lab_2b.hsh
@@ -100,6 +104,7 @@
 2B45B0B3 tutorial.hsh
 2B464651 tutorial.tex
 2B6F780D bigblank.tex
+2D0C6643 ruby_08a.vag
 2D44664C fleshchunkslt001.vag
 2D605524 proj_norm_world2.vag
 2D6A0935 tiletop.tex
@@ -131,6 +136,7 @@
 369A4FCC swoosh_low_2.vag
 36DA111D rhombus_hamm.hsh
 373D4F0B ip.m2v
+38444BF7 gameloendhitshrt.vag
 390FEB4B tileleft_frontend.tex
 39334014 2310_nuclear_device.tex
 397095D0 tiny_energy.tex
@@ -145,6 +151,7 @@
 404FF561 cain_hamm.hsh
 40A7A24C nuke_expl_movie_pl2.va1
 40D045EE 2005_megapowerfist.tex
+415608AC crater_boss.vat
 415612EC crater_boss.hsh
 415626EE crater_boss.tex
 41ECB47B .DVP.overlay..0x2000.2554883.1666.4.m2v
@@ -176,6 +183,7 @@
 4ACC71EB 2202_desert_eagle.tex
 4B153B8C 2302_gas_bomb.tex
 4C499CE6 rhombus_rifl.hsh
+4DA5B3E3 ruby_10a.vag
 4E2CFD4F amb_desert_wind.va1
 4EC8198D 2066_spiked_baseball_bat.tex
 4F4C28ED vaultdweller_hamm.hsh
@@ -199,6 +207,7 @@
 5A98EFF5 default_icon.tex
 5B137308 icon_stimpack.tex
 5B5003CB empty.m2v
+5B6522D0 ruby_07a.vag
 5DE75064 chapter2_intro.va1
 5E28B919 b_dweller.tex
 5F365DB0 /final_assets/sound/swoosh_high_1.vag
@@ -218,6 +227,7 @@
 6719DEB1 10_weapon_guns.tex
 6776D976 xbox_control_screen.tex
 6825562E 18_wastelander.tex
+6A8972B9 dismbloodgoosh01.vag
 6B3B0CD0 gamefontmed.fnt
 6C61BAF3 nadia_hamm.hsh
 6CBFE975 vaultdweller_skills.skl
@@ -239,6 +249,7 @@
 70C52429 2242_hunting_rifle.tex
 710377F1 particletex.tex
 719C0580 patty_knif.hsh
+727E1CDD hit_flesh_bludgn.vag
 733186D5 15_girls_best_friend.tex
 741D256F 2300_homemade_bomb.tex
 747B9759 swoosh_med_1.vag
@@ -247,11 +258,13 @@
 758821E2 tinygp.tex
 76014B92 garden.hsh
 760198E8 garden.tex
+7601B15A garden.vat
 7604DB43 warehouse_boss.hsh
 76056E89 warehouse_boss.tex
 7701884E tilecenter.tex
 7799E02F cyrus_rifl.hsh
 79ADD204 /final_assets/sound/fs_jump.vag
+7BC9989E dism_fleshdrop01.vag
 7CB49581 tileleft.tex
 7D42287E main_menu.bin
 7D8411F2 fointro.m2v
@@ -283,14 +296,17 @@
 8948C9CD carb_3.tex
 8962EB96 carb_2.hsh
 8963805C carb_2.tex
+8A138B26 hit_cloth_slash1.vag
 8AE6B835 pinup.m2v
 8C6624BD bosblankwindowbutton.tex
 8D9E456E 2008_ripperfist.tex
 8DE8AC12 bar.hsh
 8DE8D8C8 bar.tex
+8DE8E41A bar.vat
 8E00FE37 16_berserker.tex
 8E57FC15 opening_movie_ch1.va1
 9027D661 mill_boss.tex
+9027E0BB mill_boss.vat
 90282B3B mill_boss.hsh
 90353F0C hud_light.tex
 905F3CFC melee_large_cc02.vag
@@ -301,12 +317,14 @@
 93817605 2247_hmlaserrifle.tex
 9457444D loading.vif
 94575D9D loading.tex
+946D5C3E ruby_09a.vag
 966646AC 09_weapon_melee.tex
 99FAC039 patty_hamm.hsh
 9A4B41C1 exptable.exp
 9C782874 nuke.smg
 9C7867E0 nuke.bin
 9DF4476B docks_boss.hsh
+9DF4A283 docks_boss.vat
 9DF4BD31 docks_boss.tex
 9E65C58D frontendbuttonsmall.tex
 A076024F chap1_cain.m2v
@@ -359,6 +377,7 @@ AE9EF89E particletex03.tex
 AF509FED particletex08.tex
 AF7DB244 particletex09.tex
 AFA37975 facilities_boss.hsh
+AFA3C125 facilities_boss.vat
 AFA3CB07 facilities_boss.tex
 AFFA6D5F 2265_turbo_plasma_rifle.tex
 B074356B automap_red.tex
@@ -373,6 +392,7 @@ B4F5E592 2004_powerfist.tex
 B6245603 2267_continuous_fire_laser.tex
 B664A6C0 2224_dual_laser_smg01.tex
 B6EDC340 /final_assets/sound/buttonselect1.vag
+B6FD64CC hitchainsweetner.vag
 B701C72F cain_hand.hsh
 B73D57EB ip.bin
 B73D9ACF ip.smg
@@ -381,6 +401,7 @@ B8C8A6B9 lab_3b.hsh
 B8EB5FE2 2263_vindicator_heavy_minigun.tex
 B91C8EA0 lab_3a.tex
 B91C9E42 lab_3a.hsh
+B91CA6AA lab_3a.vat
 BAA8DDB9 nadia_gatl.hsh
 BBC6D0DD tiny_shell.tex
 BDE25A64 04_bargaining.tex
@@ -391,6 +412,7 @@ BFFBC7E7 automap_exclamation.tex
 C10D4D0D tiny_bullet.tex
 C186C11B 2062_sledgehammer.tex
 C32CB5BB rhombus_hand.hsh
+C35A8FDA hit_cloth_bludgn.vag
 C391E420 2264_flamethrower.tex
 C3DD6DB3 vaultdweller_hand.hsh
 C3F6163E pin_up_art_mov.va1
@@ -400,6 +422,7 @@ C5697CB4 2281_rocket_launcher.tex
 C61F9742 mutant.smg
 C62003A6 mutant.bin
 C87D3E7F characters_mov.va1
+C9490FFC hitchainpierce01.vag
 CA624008 tiny_quest.tex
 CC05FB95 player1right.tex
 CC598831 mx_env_des1.va1
@@ -412,6 +435,7 @@ D283C335 2304_plasma_bomb.tex
 D28EEF8F arrowleft.tex
 D29E61A2 meleelgcc2.anm
 D2AF40F1 meleelgcc1.anm
+D38794EF residence_boss.vat
 D387AF0D residence_boss.tex
 D3881F8F residence_boss.hsh
 D4C12989 01_slayer.tex
@@ -422,8 +446,10 @@ D67C6DD0 b_cain.tex
 D6FF3DDF 2222_dual_desert_eagle01.tex
 D88BED34 slotfull.tex
 D8ED231E carb_1b.hsh
+D8ED7E4E carb_1b.vat
 D8ED917C carb_1b.tex
 D91CC43D carb_1a.hsh
+D91CCE7D carb_1a.vat
 D91CD767 carb_1a.tex
 D9FF3603 18_futurewoman.tex
 DA88573D 2022_ripper_knife.tex
