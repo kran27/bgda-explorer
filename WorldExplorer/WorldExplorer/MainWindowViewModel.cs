@@ -232,6 +232,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var meshParts = new List<(JetBlackEngineLib.Data.Models.Model vif, BitmapSource? texture)>();
         var renderedLabels = new List<string>();
         var firstMeshOnly = entity.CategoryCode == 12;
+        var decodeErrors = new List<string>();
         foreach (var asset in entity.Assets)
         {
             if (asset.Role != DdfFile.AssetRole.Mesh) continue;
@@ -239,21 +240,41 @@ public class MainWindowViewModel : INotifyPropertyChanged
             var clp = loc.Clp;
             if (!clp.Directory.TryGetValue(loc.EntryLabel, out var meshEntry)) continue;
 
-            BitmapSource? texture = null;
-            var pairedTex = FindSiblingTex(clp, loc.EntryLabel);
-            if (pairedTex != null)
-                texture = TexDecoder.Decode(clp.FileData.AsSpan().Slice(pairedTex.StartOffset, pairedTex.Length));
+            // Wrap per-asset decode in try/catch — Xbox CLP entries use a
+            // different TEX/VIF format than the PS2 decoder expects, and we
+            // don't want one bad asset to crash the whole click handler.
+            // Failures land in the log instead.
+            try
+            {
+                BitmapSource? texture = null;
+                var pairedTex = FindSiblingTex(clp, loc.EntryLabel);
+                if (pairedTex != null)
+                {
+                    try
+                    {
+                        texture = TexDecoder.Decode(clp.FileData.AsSpan().Slice(pairedTex.StartOffset, pairedTex.Length));
+                    }
+                    catch (Exception ex)
+                    {
+                        decodeErrors.Add($"  TEX decode of paired texture for {loc.EntryLabel} failed: {ex.GetType().Name}: {ex.Message}");
+                    }
+                }
 
-            var uvW = texture?.PixelWidth ?? 256;
-            var uvH = texture?.PixelHeight ?? 256;
-            var vif = new JetBlackEngineLib.Data.Models.Model(VifDecoder.Decode(
-                new StringLogger(),
-                clp.FileData.AsSpan().Slice(meshEntry.StartOffset, meshEntry.Length),
-                uvW, uvH));
+                var uvW = texture?.PixelWidth ?? 256;
+                var uvH = texture?.PixelHeight ?? 256;
+                var vif = new JetBlackEngineLib.Data.Models.Model(VifDecoder.Decode(
+                    new StringLogger(),
+                    clp.FileData.AsSpan().Slice(meshEntry.StartOffset, meshEntry.Length),
+                    uvW, uvH));
 
-            meshParts.Add((vif, texture));
-            renderedLabels.Add(loc.EntryLabel);
-            if (firstMeshOnly) break;
+                meshParts.Add((vif, texture));
+                renderedLabels.Add(loc.EntryLabel);
+                if (firstMeshOnly) break;
+            }
+            catch (Exception ex)
+            {
+                decodeErrors.Add($"  VIF decode of {loc.EntryLabel} failed: {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         if (meshParts.Count > 0)
@@ -275,7 +296,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
             MainWindow.SetViewportText(1, entity.Name + " (no model)", "");
         }
 
-        LogText = DumpEntityRecord(entity);
+        var dump = DumpEntityRecord(entity);
+        if (decodeErrors.Count > 0)
+        {
+            dump += "\nDecode errors:\n" + string.Join("\n", decodeErrors);
+        }
+        LogText = dump;
     }
 
     /// <summary>

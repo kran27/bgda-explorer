@@ -33,6 +33,9 @@ public class TexDecoder
 
     public static WriteableBitmap? Decode(ReadOnlySpan<byte> data)
     {
+        // Xbox BoS uses a different TEX layout — see XboxTexDecoder.
+        if (XboxTexDecoder.LooksLikeXboxTex(data)) return XboxTexDecoder.Decode(data);
+
         GsMemory gsMem = new();
 
         var length = DataUtil.GetLeShort(data, 6) * 16;

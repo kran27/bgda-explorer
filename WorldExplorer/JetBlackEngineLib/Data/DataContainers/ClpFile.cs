@@ -1,3 +1,4 @@
+using JetBlackEngineLib.Data.Textures;
 using System.IO;
 
 namespace JetBlackEngineLib.Data.DataContainers;
@@ -197,6 +198,13 @@ public class ClpFile : LmpFile
         // The marker check is what distinguishes a real TEX from arbitrary
         // bytes that happen to have plausible width/height values at +0..+3.
         if (LooksLikeTex(data, offset, length))
+        {
+            return (".tex", null);
+        }
+
+        // Xbox-platform TEX uses a different layout than PS2's GIF-tagged TEX
+        // — see XboxTexDecoder for the format.
+        if (XboxTexDecoder.LooksLikeXboxTex(new ReadOnlySpan<byte>(data, offset, length)))
         {
             return (".tex", null);
         }
