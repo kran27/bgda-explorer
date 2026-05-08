@@ -14,14 +14,9 @@ namespace JetBlackEngineLib.Data.Models;
 ///   +0x14  u32   = zero pad
 ///   +0x18  u32   = data-section offset. The u32 at that offset holds the
 ///                  vertex-stream byte size; vertices follow immediately after.
-///   +0x1C  u32   = role unclear — varies (0x100, 0x380, 0xE80, 0x1280, …)
-///                  but vertex stride is 32 bytes regardless. Not used here.
+///   +0x1C  u32   = index-buffer start offset. u16 indices live in
+///                  [+0x1C, +0x18); count = (+0x18 - +0x1C) / 2.
 ///   +0x20  u32   = vertex count.
-///
-/// Index buffer: lives directly in front of the vertex stream — u16 entries
-/// running from somewhere in the header region up to the byte before the
-/// vertex-stream-size u32 at +0x18. We locate its start by scanning backwards
-/// for the boundary where u16 values stop being valid vertex indices.
 ///
 /// Topology: single triangle strip with **degenerate-triangle restart bridges**
 /// (a == b or b == c marks a discardable triangle that bridges two sub-strips).
@@ -51,14 +46,14 @@ public static class XboxMeshDecoder
         if (data.Length < 0x40) return false;
         // Discriminators against PS2 VIF: 0xFF sentinel at +0x13, zero pad at
         // +0x14..+0x17, in-file data offset at +0x18, sane vertex count at +0x20.
-        // (Don't gate on +0x1C: it varies — 0x100 / 0x380 / 0x1280 etc. — across
-        //  formats. Knowing that value is needed to decode, but not to detect.)
         if (data[0x13] != 0xFF) return false;
         if (DataUtil.GetLeInt(data, 0x14) != 0) return false;
         var dataOff = DataUtil.GetLeInt(data, 0x18);
         if (dataOff <= 0x20 || dataOff >= data.Length) return false;
         var vertCount = DataUtil.GetLeInt(data, 0x20);
         if (vertCount <= 0 || vertCount > 0x100000) return false;
+        var idxOff = DataUtil.GetLeInt(data, 0x1C);
+        if (idxOff < 0x24 || idxOff >= dataOff || ((dataOff - idxOff) & 1) != 0) return false;
         return true;
     }
 
@@ -113,6 +108,7 @@ public static class XboxMeshDecoder
         if (!LooksLikeXboxMesh(data)) return meshes;
 
         var dataOff = DataUtil.GetLeInt(data, 0x18);
+        var idxOff = DataUtil.GetLeInt(data, 0x1C);
         var vertCount = DataUtil.GetLeInt(data, 0x20);
 
         // The u32 at dataOff is the vertex-stream byte size; vertices follow
@@ -133,7 +129,8 @@ public static class XboxMeshDecoder
         DecodeVertexStream(data, vertStreamStart, vertCount, stride,
             texturePixelWidth, texturePixelHeight, positions, normals, uvs);
 
-        var triangleIndices = ExtractStripIndices(data, vertCount, dataOff);
+        var indexCount = (dataOff - idxOff) / 2;
+        var triangleIndices = WalkTriangleStrip(data, idxOff, indexCount, vertCount);
         AlignWindingToNormals(triangleIndices, positions, normals);
 
         meshes.Add(new Mesh(normals, positions, uvs, triangleIndices, weights));
@@ -198,42 +195,6 @@ public static class XboxMeshDecoder
         var scale = 1;
         while (scale * 2 * dim <= 32768) scale <<= 1;
         return scale * (double)dim;
-    }
-
-    private static List<int> ExtractStripIndices(ReadOnlySpan<byte> data, int vertCount, int indexEndExclusive)
-    {
-        // Index buffer sits directly in front of the vertex stream and ends
-        // at indexEndExclusive (= dataOff). Find its start by walking u16
-        // entries backwards while they're valid (< vertCount) AND we don't
-        // see a run of consecutive zero u16s, which marks the zero-padded
-        // header region above the index buffer.
-        var idxStart = indexEndExclusive;
-        var lastNonZero = indexEndExclusive;
-        var zeroRun = 0;
-        const int zeroRunStop = 4;
-        while (idxStart - 2 >= 0)
-        {
-            int v = data[idxStart - 2] | (data[idxStart - 1] << 8);
-            if (v >= vertCount) break;
-            if (v == 0)
-            {
-                zeroRun++;
-                if (zeroRun >= zeroRunStop)
-                {
-                    idxStart = lastNonZero;
-                    break;
-                }
-            }
-            else
-            {
-                zeroRun = 0;
-                lastNonZero = idxStart - 2;
-            }
-            idxStart -= 2;
-        }
-
-        var stripLen = (indexEndExclusive - idxStart) / 2;
-        return stripLen < 3 ? new List<int>() : WalkTriangleStrip(data, idxStart, stripLen, vertCount);
     }
 
     // Single triangle strip with degenerate-triangle bridges between
