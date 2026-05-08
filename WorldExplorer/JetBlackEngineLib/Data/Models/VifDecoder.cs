@@ -121,23 +121,6 @@ public class VifDecoder
         return new VertexWeight();
     }
 
-    // Tile an S,T coord to 0 -> 1.
-    private static Point TileST(Point pointIn)
-    {
-        var pointOut = pointIn;
-        if (pointOut.X > 1.0)
-        {
-            pointOut.X = pointOut.X % 1;
-        }
-
-        if (pointOut.Y > 1.0)
-        {
-            pointOut.Y = pointOut.Y % 1;
-        }
-
-        return pointOut;
-    }
-
     public static Mesh ChunksToMesh(List<Chunk> chunks, int texturePixelWidth, int texturePixelHeight)
     {
         var numVertices = 0;
@@ -274,13 +257,14 @@ public class VifDecoder
                     var udiv = texturePixelWidth * 16.0;
                     var vdiv = texturePixelHeight * 16.0;
 
+                    // Pass UVs through as-is; tile-mode wrapping happens in
+                    // the texture brush (Conversions.cs sets TileMode.Tile).
+                    // Wrapping per-vertex here would collapse triangles whose
+                    // corners straddle a tile boundary into a near-degenerate
+                    // UV span, producing visibly squished/stretched texels.
                     Point p1 = new(chunk.UVs[uv1].U / udiv, chunk.UVs[uv1].V / vdiv);
                     Point p2 = new(chunk.UVs[uv2].U / udiv, chunk.UVs[uv2].V / vdiv);
                     Point p3 = new(chunk.UVs[uv3].U / udiv, chunk.UVs[uv3].V / vdiv);
-
-                    p1 = TileST(p1);
-                    p2 = TileST(p2);
-                    p3 = TileST(p3);
 
                     if (!unInitPoint.Equals(uvCoords[vidx1]) && !p1.Equals(uvCoords[vidx1]))
                     {
@@ -526,17 +510,22 @@ public class VifDecoder
                         }
                         else if (vn == 2 && vl == 2)
                         {
-                            // v3-8
-                            var idx = offset;
-                            for (var vnum = 0; vnum < numCommand; ++vnum)
+                            // v3-8 normals. Some BoS chunks emit a second normals
+                            // unpack after the giftag that the microprogram doesn't
+                            // read; only keep the first.
+                            if (currentChunk.Normals.Count == 0)
                             {
-                                SByteVector vec = new()
+                                var idx = offset;
+                                for (var vnum = 0; vnum < numCommand; ++vnum)
                                 {
-                                    X = (sbyte)vertData[idx++],
-                                    Y = (sbyte)vertData[idx++],
-                                    Z = (sbyte)vertData[idx++]
-                                };
-                                currentChunk.Normals.Add(vec);
+                                    SByteVector vec = new()
+                                    {
+                                        X = (sbyte)vertData[idx++],
+                                        Y = (sbyte)vertData[idx++],
+                                        Z = (sbyte)vertData[idx++]
+                                    };
+                                    currentChunk.Normals.Add(vec);
+                                }
                             }
 
                             var numBytes = ((numCommand * 3) + 3) & ~3;
