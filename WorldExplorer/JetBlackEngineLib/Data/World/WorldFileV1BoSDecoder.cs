@@ -5,7 +5,7 @@ namespace JetBlackEngineLib.Data.World;
 
 /// <summary>
 /// BoS-specific world decoder. Same global header layout as BGDA1 but the
-/// per-element struct is <see cref="WorldV1BoSElement"/> at 80 bytes 
+/// per-element struct is <see cref="WorldV1BoSElement"/> at 80 bytes
 /// instead of BGDA's 56-byte <see cref="WorldV1Element"/>, plus the field
 /// positions inside the element shifted past +0x08 too.
 /// </summary>
@@ -24,6 +24,12 @@ public class WorldFileV1BoSDecoder : WorldFileDecoder
     protected override WriteableBitmap? GetElementTexture(WorldElementDataInfo dataInfo, WorldTexFile texFile,
         WorldData worldData)
     {
+        // BoS levels (both PS2 and Xbox) use PS2-style DCT chunk archives for
+        // the level texture atlas — even on Xbox where the standalone-mesh
+        // textures use the Xbox palette+indices format, level atlases stayed
+        // PS2 DCT. The descriptor format differs between PS2 and Xbox BoS
+        // (data-offset field at +0x10 vs +0x08); WorldTexFile.Decode handles
+        // both. Earlier crashes were misindexed offsets, not format mismatch.
         return texFile.GetBitmapBGDA(dataInfo, worldData);
     }
 
@@ -57,7 +63,12 @@ public class WorldFileV1BoSDecoder : WorldFileDecoder
             {
                 TextureMod = rawEl.TexCellXY % 100,
                 TextureDiv = rawEl.TexCellXY / 100,
-                TextureNumber = rawEl.TextureNum / 64,
+                // TextureNum is the byte offset to the descriptor within the
+                // texture chunk. PS2 BGDA uses stride 0x40; BoS Xbox uses
+                // stride 0x38 starting at chunk + 0x40 (descriptors at
+                // 0x40, 0x78, 0xB0, 0xE8, …). Storing as byte offset works
+                // for both — GetBitmap just uses chunk + TextureNumber.
+                TextureNumber = rawEl.TextureNum,
                 VifDataOffset = rawEl.VifDataOffset,
                 VifDataLength = rawEl.VifLength,
             },

@@ -90,10 +90,39 @@ public abstract class WorldFileDecoder : ISupportsSpecificEngineVersions
             }
         }
 
+        var uvW = element.DataInfo.TextureWidth > 0 ? element.DataInfo.TextureWidth : 256;
+        var uvH = element.DataInfo.TextureHeight > 0 ? element.DataInfo.TextureHeight : 256;
+
+        // BoS-Xbox world meshes are referenced indirectly: VifDataOffset points
+        // to a 16-byte (vertexPtr, vertexCount, indexPtr, indexByteCount) table
+        // pointing into the file. Try that first; on failure we fall through
+        // to the PS2 VIF path. DecodeWorldMesh validates the table (size
+        // prefix, in-file pointers, even index byte count) so PS2 data won't
+        // accidentally be decoded as Xbox.
+        if (!_modelCache.TryGetValue(element.DataInfo.VifDataOffset, out var cached))
+        {
+            var xboxMesh = XboxMeshDecoder.DecodeWorldMesh(data, element.DataInfo.VifDataOffset, uvW, uvH);
+            if (xboxMesh != null)
+            {
+                cached = new Model(new[] { xboxMesh });
+                _modelCache.Add(element.DataInfo.VifDataOffset, cached);
+                element.Model = cached;
+                return;
+            }
+        }
+        else
+        {
+            element.Model = cached;
+            return;
+        }
+
+        var fullSliceLen = element.DataInfo.VifDataLength * 0x10;
+        if (fullSliceLen <= 0) return;
+
         var nRegs = data[element.DataInfo.VifDataOffset + 0x10];
         var vifStartOffset = (nRegs + 2) * 0x10;
         var absoluteVifStartOffset = element.DataInfo.VifDataOffset + vifStartOffset;
-        var vifDataLength = (element.DataInfo.VifDataLength * 0x10) - vifStartOffset;
+        var vifDataLength = fullSliceLen - vifStartOffset;
 
         if (vifDataLength > 0)
         {
@@ -103,8 +132,6 @@ public abstract class WorldFileDecoder : ISupportsSpecificEngineVersions
             // the texture atlas isn't loaded yet. Fall back to 256 so UVs are
             // finite; the result paints with a checkerboard fallback brush
             // until a real texture is wired up.
-            var uvW = element.DataInfo.TextureWidth > 0 ? element.DataInfo.TextureWidth : 256;
-            var uvH = element.DataInfo.TextureHeight > 0 ? element.DataInfo.TextureHeight : 256;
             element.Model = GetElementModel(
                 NullLogger.Instance,
                 absoluteVifStartOffset,

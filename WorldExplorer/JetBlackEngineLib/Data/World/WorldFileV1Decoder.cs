@@ -55,7 +55,7 @@ public class WorldFileV1Decoder : WorldFileDecoder
             {
                 TextureMod = rawEl.TexCellXY % 100,
                 TextureDiv = rawEl.TexCellXY / 100,
-                TextureNumber = rawEl.TextureNum / 64,
+                TextureNumber = rawEl.TextureNum,
                 VifDataOffset = rawEl.VifDataOffset,
                 VifDataLength = rawEl.VifLength,
             },

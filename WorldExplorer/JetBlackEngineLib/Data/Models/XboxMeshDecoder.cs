@@ -62,6 +62,92 @@ public static class XboxMeshDecoder
         return true;
     }
 
+    /// <summary>
+    /// Decode a BoS-Xbox world-file mesh referenced via a 16-byte indirection
+    /// table. Returns null if the table doesn't validate.
+    /// </summary>
+    /// <param name="fileData">Full world-file bytes — pointers in the table are
+    /// absolute offsets into this span.</param>
+    /// <param name="tableOffset">VifDataOffset from the world element; the
+    /// 16-byte mesh table sits here as
+    /// (vertexPtr, vertexCount, indexPtr, indexByteCount).</param>
+    public static Mesh? DecodeWorldMesh(ReadOnlySpan<byte> fileData, int tableOffset, int texturePixelWidth, int texturePixelHeight)
+    {
+        if (tableOffset < 0 || tableOffset + 16 > fileData.Length) return null;
+        var vertexPtr = DataUtil.GetLeInt(fileData, tableOffset + 0);
+        var vertexCount = DataUtil.GetLeInt(fileData, tableOffset + 4);
+        var indexPtr = DataUtil.GetLeInt(fileData, tableOffset + 8);
+        // The +0x0C field is INDEX COUNT, not byte count. Verified against
+        // the engine binary: world.xvu render path passes this value directly
+        // to NV097_DRAW_INDEXED inline (sub_A9870 in default.xbe), and it
+        // matches the index-count interpretation perfectly — indices fill
+        // the region [iptr, iptr + 2*indexCount) which ends exactly at vptr.
+        var indexCount = DataUtil.GetLeInt(fileData, tableOffset + 12);
+
+        if (vertexCount <= 0 || vertexCount > 0x100000) return null;
+        if (vertexPtr < 0 || vertexPtr + 4 + vertexCount * 16 > fileData.Length) return null;
+        if (indexCount <= 0) return null;
+        if (indexPtr < 0 || indexPtr + indexCount * 2 > fileData.Length) return null;
+
+        // Vertex data starts with a u32 byte-size prefix that should equal
+        // vertexCount * 16. Treat any mismatch as "this isn't the format".
+        var sizePrefix = DataUtil.GetLeInt(fileData, vertexPtr);
+        if (sizePrefix != vertexCount * 16) return null;
+
+        var positions = new List<Point3D>(vertexCount);
+        var normals = new List<Vector3D>(vertexCount);
+        var uvs = new List<Point>(vertexCount);
+        var weights = new List<VertexWeight>();
+
+        // World meshes use the same pow2-scaled UV convention as standalone
+        // Xbox meshes — the vertex format is shared (pos/normal/uv int16).
+        // Per-axis: divisor = dim × largest_pow2_st(dim × pow2 ≤ 32768).
+        var uDiv = UvDivisor(texturePixelWidth);
+        var vDiv = UvDivisor(texturePixelHeight);
+        var vbase = vertexPtr + 4;
+        for (var i = 0; i < vertexCount; i++)
+        {
+            var p = vbase + i * 16;
+            var px = (short)(fileData[p + 0] | (fileData[p + 1] << 8));
+            var py = (short)(fileData[p + 2] | (fileData[p + 3] << 8));
+            var pz = (short)(fileData[p + 4] | (fileData[p + 5] << 8));
+            var nx = (short)(fileData[p + 6] | (fileData[p + 7] << 8));
+            var ny = (short)(fileData[p + 8] | (fileData[p + 9] << 8));
+            var nz = (short)(fileData[p + 10] | (fileData[p + 11] << 8));
+            var u  = (short)(fileData[p + 12] | (fileData[p + 13] << 8));
+            var v  = (short)(fileData[p + 14] | (fileData[p + 15] << 8));
+            positions.Add(new Point3D(px / 16.0, py / 16.0, pz / 16.0));
+            normals.Add(new Vector3D(nx / 32767.0, ny / 32767.0, nz / 32767.0));
+            uvs.Add(new Point(u / uDiv, v / vDiv));
+        }
+
+        // Topology: triangle strip (NV097_SET_BEGIN_END_OP_TRIANGLE_STRIP = 6,
+        // verified in default.xbe sub_8BB80). Doubled-index pairs are
+        // degenerate-bridge restarts; sub-strip-local parity for winding.
+        var triangleIndices = new List<int>();
+        var subStripPos = 0;
+        for (var i = 0; i + 2 < indexCount; i++)
+        {
+            var off = indexPtr + i * 2;
+            int a = fileData[off + 0] | (fileData[off + 1] << 8);
+            int b = fileData[off + 2] | (fileData[off + 3] << 8);
+            int c = fileData[off + 4] | (fileData[off + 5] << 8);
+            if (a >= vertexCount || b >= vertexCount || c >= vertexCount) { subStripPos = 0; continue; }
+            if (a == b || b == c || a == c) { subStripPos = 0; continue; }
+            if ((subStripPos & 1) == 0)
+            {
+                triangleIndices.Add(a); triangleIndices.Add(b); triangleIndices.Add(c);
+            }
+            else
+            {
+                triangleIndices.Add(b); triangleIndices.Add(a); triangleIndices.Add(c);
+            }
+            subStripPos++;
+        }
+        AlignWindingToNormals(triangleIndices, positions, normals);
+        return new Mesh(normals, positions, uvs, triangleIndices, weights);
+    }
+
     public static List<Mesh> Decode(ReadOnlySpan<byte> data, int texturePixelWidth, int texturePixelHeight)
     {
         var meshes = new List<Mesh>();
