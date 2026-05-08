@@ -1,4 +1,4 @@
-﻿using JetBlackEngineLib.Data.Textures;
+using JetBlackEngineLib.Data.Textures;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -104,12 +104,9 @@ public class WorldTexFile
 
     public WriteableBitmap? Decode(int offset, int chunkStartOffset)
     {
-        // Dark Alliance encodes pointers as offsets from the entry in the texture entry table.
-        // Return to arms (more sensibly) encodes pointers as offsets from the current chunk loaded from the disc.
-        // BoS uses the DA convention — verified empirically: with deltaOffset=offset
-        // the palette pointer for chunk 0x5800 entry 1 of bar.tex resolves to
-        // 0x7080 (in-bounds, sane palette bytes); the chunk-relative variant
-        // resolves to 0x600B800 (way past the 5 MB tex file).
+        // Dark Alliance and BoS encode pointers as offsets from the entry in
+        // the texture entry table. Return to Arms encodes them as offsets from
+        // the current chunk loaded from the disc.
         var deltaOffset = EngineVersion is EngineVersion.DarkAlliance or EngineVersion.BrotherhoodOfSteel
             ? offset : chunkStartOffset;
 
@@ -290,13 +287,9 @@ public class WorldTexFile
             var pBackBuffer = image.BackBuffer;
             var xpos = (xBlock * 16) + x;
             var ypos = (yBlock * 16) + y;
-            // Bounds-check the bitmap pointer arithmetic. Malformed chunk
-            // data has previously walked block indices past the texture's
-            // padded bounds and produced an AccessViolation in
-            // Marshal.WriteInt32 — uncatchable through normal try/catch
-            // because AccessViolationException is a corrupted-state
-            // exception. Skipping the write keeps the rest of the level
-            // rendering instead.
+            // Malformed chunk data can index past the padded bitmap bounds.
+            // AccessViolationException from Marshal.WriteInt32 is uncatchable,
+            // so we bounds-check here instead of relying on try/catch.
             if (xpos < 0 || ypos < 0 || xpos >= image.PixelWidth || ypos >= image.PixelHeight) continue;
             var p = pBackBuffer + (ypos * image.BackBufferStride) + (xpos * 4);
             Marshal.WriteInt32(p, pixel.Argb());

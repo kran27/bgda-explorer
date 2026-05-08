@@ -115,7 +115,7 @@ public class World
         var directoriesToScan = WalkUpToBosRoot(DataPath);
 
         var clpHashes = new HashSet<uint>();
-        CollectHashesFromBytes(focusClp.FileData, clpHashes);
+        ClpFile.CollectHashesFromBytes(focusClp.FileData, clpHashes);
         foreach (var d in directoriesToScan)
         {
             foreach (var path in Directory.EnumerateFiles(d, "*.CLP", SearchOption.TopDirectoryOnly))
@@ -129,7 +129,7 @@ public class World
                 try
                 {
                     if (new FileInfo(path).Length > 200_000_000) continue;
-                    CollectHashesFromBytes(File.ReadAllBytes(path), clpHashes);
+                    ClpFile.CollectHashesFromBytes(File.ReadAllBytes(path), clpHashes);
                 }
                 catch { }
             }
@@ -239,6 +239,11 @@ public class World
         }
     }
 
+    /// <summary>
+    /// Walk up at most 8 directories from <paramref name="startDir"/> looking
+    /// for ALL.DDF (the marker that lives directly in BoS's /DATA/). Returns
+    /// every visited directory; the last entry is the root if it was found.
+    /// </summary>
     private static List<string> WalkUpToBosRoot(string startDir)
     {
         var dirs = new List<string>();
@@ -252,20 +257,11 @@ public class World
         return dirs;
     }
 
-    /// <summary>
-    /// Find the BoS data root by walking up looking for ALL.DDF (the marker
-    /// file that lives directly in /DATA/). Returns null if no ancestor
-    /// contains ALL.DDF — caller falls back to the start dir.
-    /// </summary>
+    /// <summary>Returns the BoS data root or null if no ancestor has ALL.DDF.</summary>
     private static string? FindBosRoot(string startDir)
     {
-        var dir = startDir;
-        for (var i = 0; i < 8 && !string.IsNullOrEmpty(dir); i++)
-        {
-            if (File.Exists(Path.Combine(dir, "ALL.DDF"))) return dir;
-            dir = Path.GetDirectoryName(dir);
-        }
-        return null;
+        var dirs = WalkUpToBosRoot(startDir);
+        return dirs.Count > 0 && File.Exists(Path.Combine(dirs[^1], "ALL.DDF")) ? dirs[^1] : null;
     }
 
     /// <summary>
@@ -347,22 +343,6 @@ public class World
         _ => null,
     };
 
-    private static void CollectHashesFromBytes(byte[] data, HashSet<uint> sink)
-    {
-        if (data.Length < 24) return;
-        if (BitConverter.ToUInt32(data, 0) != ClpFile.Magic) return;
-        var f8 = BitConverter.ToUInt32(data, 8);
-        if (f8 == 0) return;
-        var sectorSize = 1L;
-        while ((f8 << 1) * sectorSize < data.Length) sectorSize <<= 1;
-        var dirOff = (int)(f8 * sectorSize);
-        if (dirOff <= 0 || dirOff >= data.Length) return;
-        for (var i = dirOff; i + 20 <= data.Length; i += 20)
-        {
-            var h = BitConverter.ToUInt32(data, i);
-            if (h != 0) sink.Add(h);
-        }
-    }
 }
 
 public sealed record ClpAssetRef(ClpFile Clp, string EntryLabel);

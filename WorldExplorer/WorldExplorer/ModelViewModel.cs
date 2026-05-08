@@ -145,9 +145,7 @@ public class ModelViewModel : BaseViewModel
             if (_model != null)
             {
                 // Composite containers (multi-mesh entities) have Content == null
-                // and use Children instead — a single .Content.Bounds dereference
-                // crashed on every entity click. Compute a union of child bounds
-                // when Content is missing.
+                // and use Children instead — union the child bounds in that case.
                 var bounds = _model.Content?.Bounds;
                 if (bounds == null)
                 {

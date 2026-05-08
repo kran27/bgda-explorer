@@ -1,5 +1,4 @@
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 
 namespace JetBlackEngineLib.Data.World;
 
@@ -18,73 +17,19 @@ public class WorldFileV1BoSDecoder : WorldFileDecoder
 
     protected override IEnumerable<WorldElement> ReadElements(ReadOnlySpan<byte> data, WorldFileHeader header)
     {
-        return IterateElements<WorldV1BoSElement>(data, header, WorldV1BoSElement.Size, RawDataToElement);
+        return IterateElements<WorldV1BoSElement>(data, header, WorldV1BoSElement.Size,
+            (rawEl, idx) => BuildV1Element(idx, rawEl.VifDataOffset, rawEl.VifLength,
+                rawEl.Bounds1, rawEl.Bounds2, rawEl.TextureNum, rawEl.TexCellXY,
+                rawEl.Pos, rawEl.Flags, rawEl.SinAlpha));
     }
 
     protected override WriteableBitmap? GetElementTexture(WorldElementDataInfo dataInfo, WorldTexFile texFile,
         WorldData worldData)
     {
         // BoS levels (both PS2 and Xbox) use PS2-style DCT chunk archives for
-        // the level texture atlas — even on Xbox where the standalone-mesh
-        // textures use the Xbox palette+indices format, level atlases stayed
-        // PS2 DCT. The descriptor format differs between PS2 and Xbox BoS
-        // (data-offset field at +0x10 vs +0x08); WorldTexFile.Decode handles
-        // both. Earlier crashes were misindexed offsets, not format mismatch.
+        // the level texture atlas. The descriptor format differs between PS2
+        // and Xbox BoS (data-offset field at +0x10 vs +0x08); WorldTexFile.Decode
+        // handles both.
         return texFile.GetBitmapBGDA(dataInfo, worldData);
-    }
-
-    protected override int[,] ReadTextureChunkOffsets(ReadOnlySpan<byte> data, int offset, int x1, int y1, int x2,
-        int y2)
-    {
-        var chunkOffsets = new int[100, 100];
-        for (var y = y1; y <= y2; ++y)
-        for (var x = x1; x <= x2; ++x)
-        {
-            var cellOffset = (((y - y1) * 100) + x - x1) * 8;
-            if (data.Length >= offset + cellOffset + 4)
-            {
-                var address = DataUtil.GetLeInt(data, offset + cellOffset);
-                chunkOffsets[y, x] = address;
-            }
-        }
-        return chunkOffsets;
-    }
-
-    private WorldElement RawDataToElement(WorldV1BoSElement rawEl, int elementIdx)
-    {
-        WorldElement element = new()
-        {
-            ElementIndex = elementIdx,
-            Position = rawEl.Pos / 16.0,
-            BoundingBox = new Rect3D(rawEl.Bounds1, rawEl.Bounds2 - rawEl.Bounds1),
-            NegYaxis = (rawEl.Flags & 0x40) == 0x40,
-            UsesRotFlags = (rawEl.Flags & 0x01) != 0,
-            DataInfo = new WorldElementDataInfo
-            {
-                TextureMod = rawEl.TexCellXY % 100,
-                TextureDiv = rawEl.TexCellXY / 100,
-                // TextureNum is the byte offset to the descriptor within the
-                // texture chunk. PS2 BGDA uses stride 0x40; BoS Xbox uses
-                // stride 0x38 starting at chunk + 0x40 (descriptors at
-                // 0x40, 0x78, 0xB0, 0xE8, …). Storing as byte offset works
-                // for both — GetBitmap just uses chunk + TextureNumber.
-                TextureNumber = rawEl.TextureNum,
-                VifDataOffset = rawEl.VifDataOffset,
-                VifDataLength = rawEl.VifLength,
-            },
-            RawFlags = rawEl.Flags & 0xFFFF
-        };
-
-        if (element.UsesRotFlags)
-        {
-            element.XyzRotFlags = (rawEl.Flags >> 16) & 7;
-        }
-        else
-        {
-            element.CosAlpha = (rawEl.Flags >> 16) / 32767.0;
-            element.SinAlpha = rawEl.SinAlpha / 32767.0;
-        }
-
-        return element;
     }
 }

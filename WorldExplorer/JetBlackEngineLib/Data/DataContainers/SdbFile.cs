@@ -22,10 +22,8 @@ namespace JetBlackEngineLib.Data.DataContainers;
 ///                         after linear-probe insertion)
 ///       u32  stringOffset (absolute byte offset of UTF-16 string)
 ///
-/// The hash function used to produce the 24-bit content hash is currently
-/// unknown — none of the standard hashes (CRC32 in any polynomial/init/reflection
-/// form, FNV-1/-1a, DJB2, SDBM, JOAAT) match. The hashes also do not match
-/// .CLP entry hashes, so SDB is not a filename table for CLP archives.
+/// SDB hashes do not match .CLP entry hashes; this is a separate hash space
+/// for in-game item / dialogue strings, not a CLP filename map.
 /// </summary>
 public class SdbFile
 {

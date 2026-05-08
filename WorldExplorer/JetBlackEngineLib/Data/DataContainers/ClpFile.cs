@@ -87,6 +87,43 @@ public class ClpFile : LmpFile
     {
     }
 
+    /// <summary>
+    /// Compute the sector size used by a CLP archive given its header bytes:
+    /// the largest power-of-two such that <c>packedDirOffset * 2^k &lt; dataLen</c>.
+    /// In shipped data this is either 0x100 (character / inventory archives) or
+    /// 0x1000 (HUD / sound / armor archives).
+    /// </summary>
+    private static int ComputeSectorSize(uint packedDirOffset, long dataLen)
+    {
+        var sectorSize = 1L;
+        while (((long)packedDirOffset << 1) * sectorSize < dataLen)
+        {
+            sectorSize <<= 1;
+        }
+        return (int)sectorSize;
+    }
+
+    /// <summary>
+    /// Cheap scan: read just the directory hashes from raw CLP bytes without
+    /// instantiating a <see cref="ClpFile"/> (no copies, no entry decoding).
+    /// Used to build a hash union across many archives at startup.
+    /// </summary>
+    public static void CollectHashesFromBytes(byte[] data, HashSet<uint> sink)
+    {
+        if (data.Length < 24) return;
+        if (BitConverter.ToUInt32(data, 0) != Magic) return;
+        var packedDirOffset = BitConverter.ToUInt32(data, 8);
+        if (packedDirOffset == 0) return;
+        var sectorSize = ComputeSectorSize(packedDirOffset, data.Length);
+        var dirOff = (int)(packedDirOffset * (uint)sectorSize);
+        if (dirOff <= 0 || dirOff >= data.Length) return;
+        for (var i = dirOff; i + 20 <= data.Length; i += 20)
+        {
+            var h = BitConverter.ToUInt32(data, i);
+            if (h != 0) sink.Add(h);
+        }
+    }
+
     public override void ReadDirectory()
     {
         Directory.Clear();
@@ -105,13 +142,7 @@ public class ClpFile : LmpFile
         var numValid = BitConverter.ToUInt32(FileData, _startOffset + 0x10);
         if (packedDirOffset == 0) return;
 
-        // sectorSize = largest power-of-two such that packedDirOffset * 2^k < dataLen.
-        var sectorSize = 1;
-        while (((long)packedDirOffset << 1) * sectorSize < _dataLen)
-        {
-            sectorSize <<= 1;
-        }
-
+        var sectorSize = ComputeSectorSize(packedDirOffset, _dataLen);
         var dirOffset = (int)(packedDirOffset * (uint)sectorSize);
         if (dirOffset >= _dataLen)
         {

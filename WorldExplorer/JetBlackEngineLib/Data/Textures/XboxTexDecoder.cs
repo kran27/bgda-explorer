@@ -23,21 +23,21 @@ public static class XboxTexDecoder
     public static bool LooksLikeXboxTex(ReadOnlySpan<byte> data)
     {
         if (data.Length < HeaderSize + PaletteSize + 4) return false;
-        var w = BinaryPrimitivesLE.ReadU16(data, 0);
-        var h = BinaryPrimitivesLE.ReadU16(data, 2);
+        var w = DataUtil.GetLeUShort(data, 0);
+        var h = DataUtil.GetLeUShort(data, 2);
         if (w < 4 || w > 4096 || h < 4 || h > 4096) return false;
         // PS2 TEX marker: 0x80 at +0x10. Reject so we don't claim those.
-        if (BinaryPrimitivesLE.ReadU32(data, 0x10) == 0x80) return false;
+        if (DataUtil.GetLeInt(data, 0x10) == 0x80) return false;
         // Header u32 at +0x08 is 0x38 across every shipped Xbox TEX.
-        if (BinaryPrimitivesLE.ReadU32(data, 0x08) != 0x38) return false;
+        if (DataUtil.GetLeInt(data, 0x08) != 0x38) return false;
         return data.Length >= HeaderSize + w * h + PaletteSize;
     }
 
     public static WriteableBitmap? Decode(ReadOnlySpan<byte> data)
     {
         if (data.Length < HeaderSize + PaletteSize) return null;
-        var w = BinaryPrimitivesLE.ReadU16(data, 0);
-        var h = BinaryPrimitivesLE.ReadU16(data, 2);
+        var w = DataUtil.GetLeUShort(data, 0);
+        var h = DataUtil.GetLeUShort(data, 2);
         if (w == 0 || h == 0) return null;
         if (HeaderSize + w * h + PaletteSize > data.Length) return null;
 
@@ -71,13 +71,4 @@ public static class XboxTexDecoder
         image.Unlock();
         return image;
     }
-}
-
-internal static class BinaryPrimitivesLE
-{
-    public static int ReadU16(ReadOnlySpan<byte> data, int offset)
-        => data[offset] | (data[offset + 1] << 8);
-
-    public static uint ReadU32(ReadOnlySpan<byte> data, int offset)
-        => (uint)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
 }

@@ -99,51 +99,10 @@ public static class XboxMeshDecoder
         var uvs = new List<Point>(vertexCount);
         var weights = new List<VertexWeight>();
 
-        // World meshes use the same pow2-scaled UV convention as standalone
-        // Xbox meshes — the vertex format is shared (pos/normal/uv int16).
-        // Per-axis: divisor = dim × largest_pow2_st(dim × pow2 ≤ 32768).
-        var uDiv = UvDivisor(texturePixelWidth);
-        var vDiv = UvDivisor(texturePixelHeight);
-        var vbase = vertexPtr + 4;
-        for (var i = 0; i < vertexCount; i++)
-        {
-            var p = vbase + i * 16;
-            var px = (short)(fileData[p + 0] | (fileData[p + 1] << 8));
-            var py = (short)(fileData[p + 2] | (fileData[p + 3] << 8));
-            var pz = (short)(fileData[p + 4] | (fileData[p + 5] << 8));
-            var nx = (short)(fileData[p + 6] | (fileData[p + 7] << 8));
-            var ny = (short)(fileData[p + 8] | (fileData[p + 9] << 8));
-            var nz = (short)(fileData[p + 10] | (fileData[p + 11] << 8));
-            var u  = (short)(fileData[p + 12] | (fileData[p + 13] << 8));
-            var v  = (short)(fileData[p + 14] | (fileData[p + 15] << 8));
-            positions.Add(new Point3D(px / 16.0, py / 16.0, pz / 16.0));
-            normals.Add(new Vector3D(nx / 32767.0, ny / 32767.0, nz / 32767.0));
-            uvs.Add(new Point(u / uDiv, v / vDiv));
-        }
+        DecodeVertexStream(fileData, vertexPtr + 4, vertexCount, 16,
+            texturePixelWidth, texturePixelHeight, positions, normals, uvs);
 
-        // Topology: triangle strip (NV097_SET_BEGIN_END_OP_TRIANGLE_STRIP = 6,
-        // verified in default.xbe sub_8BB80). Doubled-index pairs are
-        // degenerate-bridge restarts; sub-strip-local parity for winding.
-        var triangleIndices = new List<int>();
-        var subStripPos = 0;
-        for (var i = 0; i + 2 < indexCount; i++)
-        {
-            var off = indexPtr + i * 2;
-            int a = fileData[off + 0] | (fileData[off + 1] << 8);
-            int b = fileData[off + 2] | (fileData[off + 3] << 8);
-            int c = fileData[off + 4] | (fileData[off + 5] << 8);
-            if (a >= vertexCount || b >= vertexCount || c >= vertexCount) { subStripPos = 0; continue; }
-            if (a == b || b == c || a == c) { subStripPos = 0; continue; }
-            if ((subStripPos & 1) == 0)
-            {
-                triangleIndices.Add(a); triangleIndices.Add(b); triangleIndices.Add(c);
-            }
-            else
-            {
-                triangleIndices.Add(b); triangleIndices.Add(a); triangleIndices.Add(c);
-            }
-            subStripPos++;
-        }
+        var triangleIndices = WalkTriangleStrip(fileData, indexPtr, indexCount, vertexCount);
         AlignWindingToNormals(triangleIndices, positions, normals);
         return new Mesh(normals, positions, uvs, triangleIndices, weights);
     }
@@ -171,12 +130,28 @@ public static class XboxMeshDecoder
         var uvs = new List<Point>(vertCount);
         var weights = new List<VertexWeight>();
 
+        DecodeVertexStream(data, vertStreamStart, vertCount, stride,
+            texturePixelWidth, texturePixelHeight, positions, normals, uvs);
+
+        var triangleIndices = ExtractStripIndices(data, vertCount, dataOff);
+        AlignWindingToNormals(triangleIndices, positions, normals);
+
+        meshes.Add(new Mesh(normals, positions, uvs, triangleIndices, weights));
+        return meshes;
+    }
+
+    // The first 16 bytes of every Xbox vertex are pos.int16[3] / normal.int16[3] /
+    // uv.int16[2]; only the trailing per-stride bytes (skinning, etc.) vary.
+    private static void DecodeVertexStream(
+        ReadOnlySpan<byte> data, int streamStart, int vertCount, int stride,
+        int texturePixelWidth, int texturePixelHeight,
+        List<Point3D> positions, List<Vector3D> normals, List<Point> uvs)
+    {
         var uDiv = UvDivisor(texturePixelWidth);
         var vDiv = UvDivisor(texturePixelHeight);
-
         for (var i = 0; i < vertCount; i++)
         {
-            var p = vertStreamStart + i * stride;
+            var p = streamStart + i * stride;
             var px = (short)(data[p + 0] | (data[p + 1] << 8));
             var py = (short)(data[p + 2] | (data[p + 3] << 8));
             var pz = (short)(data[p + 4] | (data[p + 5] << 8));
@@ -185,24 +160,16 @@ public static class XboxMeshDecoder
             var nz = (short)(data[p + 10] | (data[p + 11] << 8));
             var u  = (short)(data[p + 12] | (data[p + 13] << 8));
             var v  = (short)(data[p + 14] | (data[p + 15] << 8));
-
             positions.Add(new Point3D(px / 16.0, py / 16.0, pz / 16.0));
             normals.Add(new Vector3D(nx / 32767.0, ny / 32767.0, nz / 32767.0));
             uvs.Add(new Point(u / uDiv, v / vDiv));
         }
-
-        var triangleIndices = ExtractStripIndices(data, vertCount, dataOff);
-        // Strips often have inconsistent winding across sub-strip bridges
-        // (artists' bridges don't always preserve parity). Per-vertex normals
-        // ARE consistent and trustworthy, so use them to fix winding: any
-        // triangle whose face normal opposes its average vertex normal gets
-        // its winding swapped.
-        AlignWindingToNormals(triangleIndices, positions, normals);
-
-        meshes.Add(new Mesh(normals, positions, uvs, triangleIndices, weights));
-        return meshes;
     }
 
+    // Strips often have inconsistent winding across sub-strip bridges (the
+    // artists' bridges don't always preserve parity). Per-vertex normals ARE
+    // consistent, so flip any triangle whose face normal opposes its average
+    // vertex normal.
     private static void AlignWindingToNormals(List<int> tris, IList<Point3D> positions, IList<Vector3D> normals)
     {
         for (var t = 0; t + 2 < tris.Count; t += 3)
@@ -265,39 +232,35 @@ public static class XboxMeshDecoder
             idxStart -= 2;
         }
 
-        var result = new List<int>();
         var stripLen = (indexEndExclusive - idxStart) / 2;
-        if (stripLen < 3) return result;
+        return stripLen < 3 ? new List<int>() : WalkTriangleStrip(data, idxStart, stripLen, vertCount);
+    }
 
-        // Single triangle strip with degenerate-triangle bridges between
-        // sub-strips. Winding alternates within each sub-strip, but the
-        // bridges break the global parity: counting parity in *sub-strip-
-        // local* terms (i.e., reset on each degenerate) is what keeps every
-        // sub-strip's first real triangle at "even" winding, matching how
-        // the artists built the strips.
+    // Single triangle strip with degenerate-triangle bridges between
+    // sub-strips. Winding alternates within each sub-strip, but the
+    // bridges break the global parity: counting parity in *sub-strip-local*
+    // terms (i.e., reset on each degenerate) is what keeps every sub-strip's
+    // first real triangle at "even" winding, matching how the artists built
+    // the strips.
+    private static List<int> WalkTriangleStrip(ReadOnlySpan<byte> data, int indexPtr, int indexCount, int vertexCount)
+    {
+        var result = new List<int>();
         var subStripPos = 0;
-        for (var i = 0; i + 2 < stripLen; i++)
+        for (var i = 0; i + 2 < indexCount; i++)
         {
-            var off = idxStart + i * 2;
+            var off = indexPtr + i * 2;
             int a = data[off + 0] | (data[off + 1] << 8);
             int b = data[off + 2] | (data[off + 3] << 8);
             int c = data[off + 4] | (data[off + 5] << 8);
-            if (a == b || b == c || a == c)
-            {
-                subStripPos = 0;
-                continue;
-            }
+            if (a >= vertexCount || b >= vertexCount || c >= vertexCount) { subStripPos = 0; continue; }
+            if (a == b || b == c || a == c) { subStripPos = 0; continue; }
             if ((subStripPos & 1) == 0)
             {
-                result.Add(a);
-                result.Add(b);
-                result.Add(c);
+                result.Add(a); result.Add(b); result.Add(c);
             }
             else
             {
-                result.Add(b);
-                result.Add(a);
-                result.Add(c);
+                result.Add(b); result.Add(a); result.Add(c);
             }
             subStripPos++;
         }

@@ -1,8 +1,10 @@
-﻿using JetBlackEngineLib.Data.Models;
+﻿using JetBlackEngineLib.Core;
+using JetBlackEngineLib.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
 namespace JetBlackEngineLib.Data.World;
 
@@ -41,8 +43,64 @@ public abstract class WorldFileDecoder : ISupportsSpecificEngineVersions
     protected abstract WriteableBitmap? GetElementTexture(WorldElementDataInfo dataInfo, WorldTexFile texFile,
         WorldData worldData);
 
-    protected abstract int[,] ReadTextureChunkOffsets(ReadOnlySpan<byte> data, int offset, int x1, int y1, int x2,
-        int y2);
+    protected virtual int[,] ReadTextureChunkOffsets(ReadOnlySpan<byte> data, int offset, int x1, int y1, int x2,
+        int y2)
+    {
+        // Tex chunk-offset table is row-major over the [x1..x2, y1..y2] cell
+        // window with 8-byte stride per cell. The bounds check is needed for
+        // BGDA's town.world, which addresses textures past the maximum x range.
+        var chunkOffsets = new int[100, 100];
+        for (var y = y1; y <= y2; ++y)
+        for (var x = x1; x <= x2; ++x)
+        {
+            var cellOffset = (((y - y1) * 100) + x - x1) * 8;
+            if (data.Length >= offset + cellOffset + 4)
+            {
+                chunkOffsets[y, x] = DataUtil.GetLeInt(data, offset + cellOffset);
+            }
+        }
+        return chunkOffsets;
+    }
+
+    /// <summary>
+    /// Build a <see cref="WorldElement"/> from the platform-independent fields
+    /// of a v1 element struct (BGDA <see cref="WorldV1Element"/> and BoS
+    /// <see cref="WorldV1BoSElement"/> both expose the same logical set, just
+    /// with different physical offsets in their structs).
+    /// </summary>
+    protected static WorldElement BuildV1Element(int elementIdx, int vifDataOffset, int vifLength,
+        Vector3F bounds1, Vector3F bounds2, int textureNum, short texCellXy,
+        Vector3Short pos, int flags, short sinAlpha)
+    {
+        WorldElement element = new()
+        {
+            ElementIndex = elementIdx,
+            Position = pos / 16.0,
+            BoundingBox = new Rect3D(bounds1, bounds2 - bounds1),
+            NegYaxis = (flags & 0x40) == 0x40,
+            UsesRotFlags = (flags & 0x01) != 0,
+            DataInfo = new WorldElementDataInfo
+            {
+                TextureMod = texCellXy % 100,
+                TextureDiv = texCellXy / 100,
+                TextureNumber = textureNum,
+                VifDataOffset = vifDataOffset,
+                VifDataLength = vifLength,
+            },
+            RawFlags = flags & 0xFFFF
+        };
+
+        if (element.UsesRotFlags)
+        {
+            element.XyzRotFlags = (flags >> 16) & 7;
+        }
+        else
+        {
+            element.CosAlpha = (flags >> 16) / 32767.0;
+            element.SinAlpha = sinAlpha / 32767.0;
+        }
+        return element;
+    }
 
     protected List<WorldElement> IterateElements<T>(ReadOnlySpan<byte> data, WorldFileHeader header,
         int elementSize, Func<T, int, WorldElement?> elementParseFunc) where T : struct

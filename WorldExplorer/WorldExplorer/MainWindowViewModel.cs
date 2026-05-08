@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2012 Ian Brown
+/*  Copyright (C) 2012 Ian Brown
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -240,10 +240,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
             var clp = loc.Clp;
             if (!clp.Directory.TryGetValue(loc.EntryLabel, out var meshEntry)) continue;
 
-            // Wrap per-asset decode in try/catch — Xbox CLP entries use a
-            // different TEX/VIF format than the PS2 decoder expects, and we
-            // don't want one bad asset to crash the whole click handler.
-            // Failures land in the log instead.
+            // Wrap per-asset decode so a single bad asset (e.g. a format the
+            // current decoder doesn't recognize) lands in the log instead of
+            // aborting the rest of the entity's meshes.
             try
             {
                 BitmapSource? texture = null;
@@ -343,7 +342,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (World == null) return null;
         var lowerName = entityName.Trim().ToLowerInvariant();
 
-        // Strategy 1: direct hash on "<lower>.tex"
         var hash = BosNameTable.Hash(lowerName + ".tex");
         if (World.AssetIndex.TryGetValue(hash, out var loc)
             && loc.Clp.Directory.TryGetValue(loc.EntryLabel, out var entry))
@@ -353,12 +351,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
             return new WorldTexFile(World.EngineVersion, bytes, lowerName + ".tex");
         }
 
-        // Strategy 2: find the sibling _T.CLP and pick its biggest entry
         var siblingName = entityName.Trim().ToUpperInvariant() + "_T.CLP";
         foreach (var clp in World.LoadedClps)
         {
             if (!string.Equals(clp.Name, siblingName, StringComparison.OrdinalIgnoreCase)) continue;
-            // Pick the largest entry — that's always the .tex
+            // The .tex is always the biggest entry in a _T.CLP.
             string? bestKey = null;
             int bestSize = 0;
             foreach (var (key, info) in clp.Directory)
@@ -478,9 +475,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var ddf = World?.WorldDdf;
         if (ddf != null && entity.RecordOffset + 0x14 <= ddf.FileData.Length)
         {
-            // Get total size from +0x10
             var size = (int)BitConverter.ToUInt32(ddf.FileData, entity.RecordOffset + 0x10);
-            // Clamp to the file
             size = Math.Min(size, ddf.FileData.Length - entity.RecordOffset);
             if (size > 0x14)
             {
@@ -492,7 +487,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
                     if (u == 0) continue;
                     var f = BitConverter.ToSingle(ddf.FileData, entity.RecordOffset + off);
                     var i = (int)u;
-                    // Float interpretation: only show if it's a "reasonable" magnitude
                     var floatStr = (Math.Abs(f) > 0.0001f && Math.Abs(f) < 1e10f) ? f.ToString("F4") : "—";
                     sb.AppendFormat("  +0x{0:X3}  u32=0x{1:X8} ({2,11})  float={3}\n", off, u, i, floatStr);
                 }
@@ -574,10 +568,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var sdb = node.SdbFile;
         var sb = new StringBuilder();
         sb.AppendFormat("{0}\nString database — {1} records.\n", sdb.Name, sdb.Records.Count);
-        sb.AppendLine("Note: SDB hashes do NOT match .CLP entry hashes; this is a separate");
-        sb.AppendLine("hash space for in-game item / dialogue strings, not a CLP filename map.");
-        sb.AppendLine("The hash function used to derive the upper 24 bits of each record is");
-        sb.AppendLine("not yet identified.");
         sb.AppendLine();
         sb.AppendLine("  slot   stored hash   string");
         sb.AppendLine("  -----  -----------   ------------------------------------------------");
@@ -585,7 +575,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             var preview = rec.Text ?? "<missing string>";
             if (preview.Length > 96) preview = preview.Substring(0, 93) + "...";
-            // Strip newlines for table layout.
             preview = preview.Replace('\r', ' ').Replace('\n', ' ');
             sb.AppendFormat("  {0,5}  0x{1:X8}    {2}\n", rec.Slot, rec.Hash, preview);
         }
@@ -672,13 +661,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 break;
             case ".vif":
             {
-                // Try multiple pairing strategies in order:
-                //   1. BGDA naming convention: same basename, .tex extension
-                //   2. BoS / DDF: a sibling entry whose name shares the slotNNN
-                //      prefix (the ScanSubFiles output for a single CLP entry
-                //      labels its parts slotNNN_p0, slotNNN_p1, …)
-                //   3. Same-prefix entry (entity name) elsewhere in the archive
-                LmpFile.EntryInfo? pairedTex = null;
+                LmpFile.EntryInfo? pairedTex;
                 var texFilename = Path.GetFileNameWithoutExtension(lmpEntry.Label) + ".tex";
                 if (lmpFile.Directory.TryGetValue(texFilename, out var ent))
                 {
@@ -694,10 +677,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 StringLogger log = new();
                 _modelViewModel.Texture = SelectedNodeImage;
                 _modelViewModel.AnimData = null;
-                // VifDecoder divides UV coords by (textureDim * 16). With dim 0 we
-                // get NaN UVs and WPF silently drops the geometry. Substitute 256
-                // so UVs are finite when there is no paired texture; the Model
-                // viewer falls back to a checkerboard brush in that case.
+                // VifDecoder divides UV coords by (textureDim * 16). With dim 0 we get
+                // NaN UVs and WPF silently drops the geometry; fall back to 256 so the
+                // Model viewer can paint with the checkerboard brush instead.
                 var uvW = SelectedNodeImage?.PixelWidth ?? 256;
                 var uvH = SelectedNodeImage?.PixelHeight ?? 256;
                 Model model = new(VifDecoder.Decode(
