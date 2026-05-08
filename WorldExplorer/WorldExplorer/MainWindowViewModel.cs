@@ -247,12 +247,35 @@ public class MainWindowViewModel : INotifyPropertyChanged
             try
             {
                 BitmapSource? texture = null;
-                var pairedTex = FindSiblingTex(clp, loc.EntryLabel);
+                // Prefer this entity's specific pairing — same mesh hash can
+                // appear in multiple entities with different paired textures
+                // (cyrus skins, bottle-cap variants, etc.). The DDF parser
+                // stores PairedHash on the texture asset (texture → mesh),
+                // not the mesh, so we look for the texture in this entity
+                // whose PairedHash points back at this mesh.
+                LmpFile.EntryInfo? pairedTex = null;
+                LmpFile pairedTexClp = clp;
+                uint? entityPairedTexHash = null;
+                foreach (var other in entity.Assets)
+                {
+                    if (other.Role != DdfFile.AssetRole.Texture) continue;
+                    if (other.PairedHash != asset.Hash) continue;
+                    entityPairedTexHash = other.Hash;
+                    break;
+                }
+                if (entityPairedTexHash is uint pairedHash
+                    && World.AssetIndex.TryGetValue(pairedHash, out var texLoc)
+                    && texLoc.Clp.Directory.TryGetValue(texLoc.EntryLabel, out var texEntry))
+                {
+                    pairedTex = texEntry;
+                    pairedTexClp = texLoc.Clp;
+                }
+                pairedTex ??= FindSiblingTex(clp, loc.EntryLabel);
                 if (pairedTex != null)
                 {
                     try
                     {
-                        texture = TexDecoder.Decode(clp.FileData.AsSpan().Slice(pairedTex.StartOffset, pairedTex.Length));
+                        texture = TexDecoder.Decode(pairedTexClp.FileData.AsSpan().Slice(pairedTex.StartOffset, pairedTex.Length));
                     }
                     catch (Exception ex)
                     {

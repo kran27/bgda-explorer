@@ -40,6 +40,9 @@ public class VifDecoder
     public static List<Mesh> Decode(ILogger log, ReadOnlySpan<byte> data, int texturePixelWidth,
         int texturePixelHeight)
     {
+        if (XboxMeshDecoder.LooksLikeXboxMesh(data))
+            return XboxMeshDecoder.Decode(data, texturePixelWidth, texturePixelHeight);
+
         var sig = DataUtil.GetLeInt(data, 0);
         var numMeshes = data[0x12] & 0xFF;
         var meshBlockOffset = 0x28;
