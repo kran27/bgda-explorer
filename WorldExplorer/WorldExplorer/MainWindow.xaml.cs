@@ -22,6 +22,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using WorldExplorer.DataExporters;
@@ -313,6 +314,55 @@ public partial class MainWindow : Window
                 stream.Close();
             }
         }
+    }
+
+    private void Menu_Export_TextureWeaved_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedNodeImage == null)
+        {
+            MessageBox.Show(this, "No texture currently loaded.", "Error", MessageBoxButton.OK);
+            return;
+        }
+
+        var src = ViewModel.SelectedNodeImage;
+        if (src.PixelHeight < 2 || (src.PixelHeight & 1) != 0)
+        {
+            MessageBox.Show(this, "Texture height must be even to weave fields.", "Error",
+                MessageBoxButton.OK);
+            return;
+        }
+
+        SaveFileDialog dialog = new() {Filter = "PNG Image|*.png"};
+        if (!dialog.ShowDialog(this).GetValueOrDefault(false)) return;
+
+        var woven = WeaveInterlacedFields(src);
+        using FileStream stream = new(dialog.FileName, FileMode.Create);
+        PngBitmapEncoder encoder = new();
+        encoder.Frames.Add(BitmapFrame.Create(woven));
+        encoder.Save(stream);
+    }
+
+    // Interleaves a texture stored as two stacked fields (top half + bottom
+    // half) into a single image with the same dimensions, taking output line
+    // 2k from top-half line k and output line 2k+1 from bottom-half line k.
+    private static BitmapSource WeaveInterlacedFields(BitmapSource src)
+    {
+        var converted = new FormatConvertedBitmap(src, PixelFormats.Bgra32, null, 0);
+        int w = converted.PixelWidth;
+        int h = converted.PixelHeight;
+        int halfH = h / 2;
+        int stride = w * 4;
+        byte[] pixels = new byte[stride * h];
+        converted.CopyPixels(pixels, stride, 0);
+
+        byte[] output = new byte[stride * h];
+        for (int y = 0; y < halfH; y++)
+        {
+            Buffer.BlockCopy(pixels, y * stride, output, (2 * y) * stride, stride);
+            Buffer.BlockCopy(pixels, (halfH + y) * stride, output, (2 * y + 1) * stride, stride);
+        }
+
+        return BitmapSource.Create(w, h, src.DpiX, src.DpiY, PixelFormats.Bgra32, null, output, stride);
     }
 
     private void Menu_Export_Model_Click(object sender, RoutedEventArgs e)

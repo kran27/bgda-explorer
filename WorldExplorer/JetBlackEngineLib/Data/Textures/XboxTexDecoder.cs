@@ -64,7 +64,7 @@ public static class XboxTexDecoder
             for (var x = 0; x < w; x++)
             {
                 var idx = data[pixOff + y * w + x];
-                Marshal.WriteInt32(row + x * 4, palette[idx].Argb());
+                Marshal.WriteInt32(row + x * 4, palette[idx].ArgbDirect());
             }
         }
         image.AddDirtyRect(new System.Windows.Int32Rect(0, 0, w, h));

@@ -3,6 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:WorldExplorer"
         xmlns:treeView="clr-namespace:WorldExplorer.TreeView"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         Title="World Explorer" Height="582" Width="848" DataContext="{Binding}">
     <Grid>
         <Grid.RowDefinitions>
@@ -23,6 +28,7 @@
             <MenuItem Header="_Edit">
                 <MenuItem x:Name="Menu_Export" Header="_Export">
                     <MenuItem x:Name="Menu_Export_Texture" Header="Texture" Click="Menu_Export_Texture_Click" />
+                    <MenuItem x:Name="Menu_Export_TextureWeaved" Header="Texture (Weave Interlaced Fields)" Click="Menu_Export_TextureWeaved_Click" />
                     <MenuItem x:Name="Menu_Export_Model" Header="Model" Click="Menu_Export_Model_Click" />
                     <MenuItem x:Name="Menu_Export_PosedModel" Header="Posed Model" Click="Menu_Export_PosedModel_Click" />
                 </MenuItem>

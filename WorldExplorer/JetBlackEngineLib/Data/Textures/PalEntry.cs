@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2012 Ian Brown
+/*  Copyright (C) 2012 Ian Brown
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@ namespace JetBlackEngineLib.Data.Textures;
 
 public class PalEntry
 {
-    private const int TransparentThreshold = 0x80;
     public byte A;
     public byte B;
     public byte G;
@@ -26,21 +25,22 @@ public class PalEntry
 
     public int Argb()
     {
-        // Binary alpha: A == 0 is the colorkey (transparent), everything
-        // else renders fully opaque. This is wrong for character textures
-        // whose cutouts use low-but-non-zero alpha values (those render as
-        // their RGB color — typically black — rather than being discarded),
-        // but bumping the threshold higher misclassifies world/level
-        // palettes whose alphas span 0x01..0x80 uniformly: "transparent
-        // characters" → "invisible levels". A proper fix needs per-texture
-        // alpha-mode dispatch keyed on the TEX header marker byte
-        // (0xC2/0xC4 vs 0xC6) — not yet implemented.
-        var convertedAlpha = (byte)(A == 0 ? 0 : 0xFF);
-        var argb = (convertedAlpha << 24) |
+        var argb = ((A is 0x80 or 0 ? 0 : 0xFF) << 24) |
                    ((R << 16) & 0xFF0000) |
                    ((G << 8) & 0xFF00) |
                    (B & 0xFF);
         return argb;
+    }
+
+    /// <summary>
+    /// For palettes whose alpha is already in 0..0xFF (Xbox).
+    /// </summary>
+    public int ArgbDirect()
+    {
+        return (A << 24) |
+               ((R << 16) & 0xFF0000) |
+               ((G << 8) & 0xFF00) |
+               (B & 0xFF);
     }
 
     public static PalEntry[] ReadPalette(ReadOnlySpan<byte> fileData, int palW, int palH)
