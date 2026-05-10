@@ -502,6 +502,17 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         var ext = (Path.GetExtension(lmpEntry.Label) ?? "").ToLower();
 
+        // Selecting an .anm directly under a DDF entity should preview the
+        // clip on the entity's composite mesh, not on whatever model happened
+        // to be loaded last (a sibling sub-mesh, a different entity, or
+        // nothing — in which case the .anm path would otherwise fall through
+        // to the skeleton-only view). Rebuild the composite first so the
+        // subsequent AnimData assignment lands on the right meshes.
+        if (ext == ".anm" && lmpEntry.Parent is DdfEntityTreeViewModel entityNode)
+        {
+            OnDdfEntitySelected(entityNode);
+        }
+
         try
         {
             DispatchLmpEntry(lmpFile, entry, lmpEntry, ext);
@@ -713,8 +724,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 if (_modelViewModel.VifModel != null)
                 {
                     var boneCount = _modelViewModel.VifModel.CountBones();
-                    // Ensure the animation has the same number of bones as the model
-                    if (boneCount != 0 && boneCount == animData.NumBones)
+                    // CountBones returns (max-skinned-bone-id + 1) — only bones
+                    // that vertex weights reference. animData.NumBones counts
+                    // the full skeleton, including unskinned helpers (root, IK,
+                    // attach points). Requiring equality rejects legitimate
+                    // skeletons with trailing unskinned bones (e.g. the baby
+                    // deathclaw). The pose lookup in Conversions.CreateModel3D
+                    // only needs every referenced bone id to be < NumBones.
+                    if (boneCount != 0 && boneCount <= animData.NumBones)
                     {
                         _modelViewModel.AnimData = animData;
 

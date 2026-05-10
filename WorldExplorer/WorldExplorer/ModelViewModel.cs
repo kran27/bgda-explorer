@@ -52,6 +52,13 @@ public class ModelViewModel : BaseViewModel
 
     private Model? _vifModel;
 
+    // Set by SetCompositeModel for DDF entities that bundle multiple
+    // (mesh, texture) pairs. When non-null, UpdateModel rebuilds the visual
+    // as one ModelVisual3D per part so each keeps its own texture across
+    // animation frames and the normals toggle. Cleared by the VifModel
+    // setter (single-mesh path).
+    private IList<(Model vif, BitmapSource? texture)>? _parts;
+
     private readonly System.Windows.Threading.DispatcherTimer _playTimer = new()
         { Interval = TimeSpan.FromMilliseconds(16.66f) };
     private bool _isPlaying;
@@ -99,10 +106,18 @@ public class ModelViewModel : BaseViewModel
         set
         {
             _vifModel = value;
+            // Single-mesh assignment drops any prior composite parts; otherwise
+            // UpdateModel would still rebuild from stale parts.
+            _parts = null;
             UpdateModel(true);
             OnPropertyChanged(nameof(VifModel));
         }
     }
+
+    /// <summary>Force a rebuild of the visual without altering VifModel/parts.
+    /// Used by the normals checkbox so toggling it preserves per-part textures
+    /// of a composite DDF entity.</summary>
+    public void RefreshModel() => UpdateModel(false);
 
     public int MaximumFrame
     {
@@ -213,27 +228,31 @@ public class ModelViewModel : BaseViewModel
     /// </summary>
     public void SetCompositeModel(IList<(Model vif, BitmapSource? texture)> parts)
     {
-        AnimData = null;
+        // Reset animation state without invoking the AnimData setter — that
+        // would call UpdateModel before _parts is in place and emit an empty
+        // single-mesh frame.
+        _animData = null;
+        _currentFrame = 0;
+
         if (parts.Count == 0)
         {
+            _parts = null;
             VifModel = null;
+            OnPropertyChanged(nameof(AnimData));
+            OnPropertyChanged(nameof(MaximumFrame));
             return;
         }
 
-        // Combined VifModel for camera bounds + ShowExportForPosedModel.
+        _parts = parts;
+        // Combined VifModel for bone counting (animation match check) and
+        // ShowExportForPosedModel.
         var allMeshes = parts.SelectMany(p => p.vif.MeshList).ToList();
         _vifModel = new Model(allMeshes);
 
-        ModelVisual3D container = new();
-        foreach (var (vif, tex) in parts)
-        {
-            var part = (GeometryModel3D)Conversions.CreateModel3D(vif.MeshList, tex, null, 0);
-            container.Children.Add(new ModelVisual3D { Content = part });
-        }
-
-        // Bypass UpdateModel since we built the visual ourselves.
-        Model = container;
+        UpdateModel(false);
         OnPropertyChanged(nameof(VifModel));
+        OnPropertyChanged(nameof(AnimData));
+        OnPropertyChanged(nameof(MaximumFrame));
     }
 
     private void UpdateModel(bool updateCamera)
@@ -244,20 +263,41 @@ public class ModelViewModel : BaseViewModel
             return;
         }
 
-        var newModel =
-            (GeometryModel3D)Conversions.CreateModel3D(_vifModel.MeshList, Texture, _animData, CurrentFrame);
-        ModelVisual3D container = new() {Content = newModel};
+        var showNormals = _modelView.normalsBox.IsChecked.GetValueOrDefault();
+        ModelVisual3D container = new();
 
-        if (_modelView.normalsBox.IsChecked.GetValueOrDefault())
+        if (_parts != null)
         {
-            MeshNormalsVisual3D normal = new() {Mesh = (MeshGeometry3D)newModel.Geometry};
-
-            container.Children.Add(normal);
+            // Composite (DDF entity) — one GeometryModel3D per part keeps each
+            // part's paired texture; any current pose/frame is applied per
+            // part so animations work on the entity preview model.
+            foreach (var (vif, tex) in _parts)
+            {
+                var partGeom = (GeometryModel3D)Conversions.CreateModel3D(
+                    vif.MeshList, tex, _animData, CurrentFrame);
+                container.Children.Add(new ModelVisual3D { Content = partGeom });
+                if (showNormals)
+                {
+                    container.Children.Add(new MeshNormalsVisual3D
+                        { Mesh = (MeshGeometry3D)partGeom.Geometry });
+                }
+            }
+        }
+        else
+        {
+            var newModel = (GeometryModel3D)Conversions.CreateModel3D(
+                _vifModel.MeshList, Texture, _animData, CurrentFrame);
+            container.Content = newModel;
+            if (showNormals)
+            {
+                container.Children.Add(new MeshNormalsVisual3D
+                    { Mesh = (MeshGeometry3D)newModel.Geometry });
+            }
         }
 
         Model = container;
 
-        if (updateCamera && _model != null)
+        if (updateCamera && _model != null && _model.Content != null)
         {
             UpdateCamera(_model);
         }
