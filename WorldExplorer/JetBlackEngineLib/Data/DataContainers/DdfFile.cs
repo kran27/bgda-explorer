@@ -248,12 +248,14 @@ public class DdfFile
             var assetArrayStart = recordOffset + AssetArrayOffset;
             if (assetArrayStart + typeTable.Length * 4 > FileData.Length) continue;
 
-            // Skip records whose entity hash isn't in any loaded SDB. The
-            // engine resolves these via inter-DDF cross-references at runtime,
-            // but for the explorer's tree it just produces hash placeholders
-            // with no way to identify what they are. The caller can broaden
-            // SDB coverage if it wants more entities visible.
-            if (!sdbNames.TryGetValue(entityHash, out var entityName)) continue;
+            // Fall back to a hex-hash placeholder when no SDB names this entity.
+            // The engine resolves these via inter-DDF cross-references at runtime;
+            // the explorer can't recover a friendly name, but the entity still has
+            // a category and asset refs worth surfacing in the tree.
+            if (!sdbNames.TryGetValue(entityHash, out var entityName))
+            {
+                entityName = $"0x{entityHash:X8}";
+            }
             var entity = new EntityRecord(entityName, entityHash, recordOffset, (int)category);
 
             // Walk the asset-ref array in the engine's order, attributing each

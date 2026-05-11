@@ -1,0 +1,2020 @@
+00594347 amb_dinner_drunk1
+007EBF88 smoke_vert_medium
+00CE132C creature_radscorpion_glowing
+00D2D1B5 smoke_vert_small
+00D8182B greengoo_vert_medium
+00E084B8 creature_ghoul_psycho_smg
+0123C5A0 creature_mutant_nightkin_rocket
+0144B360 creature_radscorpion_giant
+01705941 Worn Key
+020E3A4E smoke_trail
+023C57C3 NadiaTeslaArmorHelmet
+02A75E40 t_mcl
+02AB9660 cw_mutantblob_mouth
+02B3E4FF Tesla Armor
+02F9BF71 world_light_Steve
+0423E08C COR_General_Streak
+042A1139 glow_blue_idle
+048F845F cain_armor_power_torso
+04C46FB1 Water_Puddle_Large_6130
+04DD8FB6 Go_Here_8505
+04DE928F Special Package
+04F19DAE effect_explosion_firegrenade
+04F88469 muzzleblast_beretta
+0511CE45 lightning_trap_large
+05338F9B charge_ltenergy_small
+054DFC69 Ruby, Wasteland Prostitute
+057CB3C7 cw_mutant_laserminigun
+059FEF30 effect_cloud_dirt_small
+05A16C1D BRK_park_bench_stone_broken_5051
+05F14F60 greengas_horiz_large_2
+061ECE78 effect_greenfire_vert_large
+0642E08F creature_deathclaw_ancient
+06460BB0 Security Door
+069B9A34 LAB_1b
+06BC1ACD LAB_3a
+06BC1ACE LAB_3b
+0709897B Armpit, Wasteland Bartender
+0766A987 glow_red
+0768E3F9 Leather Boots
+077791E9 Combat Armor
+07B4A260 redblood_dripping_trail
+07CF7B0D cain_armor_combat_head
+080828D3 hitworld_ltenergy
+08092C1F charge_test
+081981AE creature_ghoul_psycho_spectator
+083550ED fire_small_2
+085B8FF9 Win_19_IntDiner_IW_1BC
+088B36B9 world_light_LAB_BOSSb
+090A24FE lightning_TEST_2
+09678780 bullet_charged_hmlaserpistol
+09683B93 effect_chunks_human_heavy
+09814A08 Power Gauntlets
+099B166F LIGHT_yellow_medium
+09BF9FDB Glasses
+09D4CD18 muzzleblast_laserpistol_nolight
+09EB71CF Speciman_Tank_Large_Scorpion_7696
+09FB7DA7 LIGHT_purple_xlarge
+0A266C1E effect_explosion_large
+0A598E00 effect_dripping_blood_small
+0A8412CD water_vert_large
+0AB6C686 blob_wall
+0AC83583 effect_greengoo_puddle_large
+0AFA238D BRK_table_small_square_7020
+0B3B13DB charge_mdenergy_line
+0B846532 water_falling
+0B9F193A fireball_invis
+0BDE0019 cleaver_energy
+0C0EBC5C effect_dripping_oil
+0C124C98 COR_General_Circle
+0C441BF5 effect_fire_window
+0C4B1B4F WIN_grn_win03b
+0CAC9C6C WIN_grn_win09c
+0CAC9C6D WIN_grn_win09b
+0CDEB0B5 light_muzzle_blast_small
+0CF50758 Dania
+0D03569C FACILITIES_1
+0D03569E FACILITIES_3
+0D03569F FACILITIES_2
+0D2AEE73 test_laser
+0D61F2C2 smoke_large
+0DBDCBB3 t_ren
+0DD635F0 effect_explosion_plasmagrenade
+0E60C829 smoke_trail_projectile
+0EACAFBF Speciman_Tank_Large_Human_7697
+0EB4B901 Power Fists
+0EB4B91F Power Fists
+0ECDB91F pickup_ammo_flame_junk
+0F047AFA BRK_bookcase_large_damaged_7008
+0F2032F2 trap_greengoo_large
+0F5A1B69 BRK_crate_plastic_radioactive_2_7515
+0F7C0FB0 Tesla Gauntlets
+0FA2FD92 body_energy_attis
+0FAF2549 muzzleblast_contfirelaser
+0FB3C66D creature_mutant_nightkin_gatling
+0FBBD8E9 cw_glowradscorpion_tail
+104F3945 Brahmin
+105331DA trap_laser_instakill
+10663FFE smoke_bullet_wall_hit
+10695354 BRK_plate_dinner_8020
+10695355 BRK_plate_dinner_8021
+10695356 BRK_plate_dinner_8022
+10695357 BRK_plate_dinner_8023
+1073404E Rotten Toe
+107BBF4B cain_armor_tesla_head
+1083AC99 gibchunks_insect_light
+10A99ACF cw_bestfrienddog_paw_R
+10A99AD1 cw_bestfrienddog_paw_L
+10B8C478 explodebarrel
+10EADB11 effect_explosion_plasmacan_charged
+10FE12A6 LIGHT_green_large
+11274E82 cw_teslarobot_lightning
+117BA185 creature_raider_soldier_hammer2
+117BA186 creature_raider_soldier_hammer1
+119B28B6 Goggles
+119C416D Hunting Rifle
+11B0E9F7 Torch
+11D51699 flies01
+1223033D shockwave_small_plasma
+127A135C bullet_rifle_plasmarifle
+12A361E5 Home-Made Laser Rifle
+12AE1B5A effect_greengoo_horiz_large
+12D4F456 world_light_town_1b
+12FCEAB9 effect_chunks_mutant_heavy
+130B6C2C effect_smoke_large
+132F48F2 creature_ambient_flyswarm
+136C4BFA muzzle_blast_lgbullet_3
+136C4BFB muzzle_blast_lgbullet_2
+136C4BFD muzzle_blast_lgbullet_4
+1382D2CB cain_armor_metal_torso
+13AA93EF Power Armor
+13E6ECAF Environment Helmet
+13FBBB2A gen_light_teal_xlarge
+1412A587 projtrail_flames
+141CC78D cw_giantrat_bite
+1455F722 dirt_cloud_small
+14609B48 LIGHT_teal_xlarge
+14832AD3 trap_lightning_instakill
+153CE12D ScriptsTest
+15827B95 dirt_cloud_ambient
+164D0516 MOV_Tumbleweed_9020
+165F2E9D hardwood
+16837567 Fists
+16837579 Fists
+16AF64AB gen_light_white_small
+17341078 Combat Shotgun
+175F994F greengoo_horiz_small
+17711EEA chunks_wood
+17B4D9A7 dust_cloud_ambient
+1805AF12 ptest
+18D1DC2F waterdrops
+18D28E77 BRK_table_small_round_7023
+18EF7438 creature_mutant_blob_tentacle_two
+18F72B38 muzzleblast_meatcan
+19052653 creature_robot_tesla_buddy
+193F1E4E LIGHT_teal_medium
+1943B407 Raider Matron's Key
+194F784E cain_armor_leather_arms
+19B38AEC creature_roach_mutant
+19B7FD3B creature_raider_thug_knife
+19D22F8E fireball
+19FA996A Home-Made Rocket Launcher
+1A6DBF04 TEST_heat_distortion
+1A91CDB0 sparks_forcefield
+1A937601 Environment Armor
+1AD412CF creature_rat_WHITE
+1AE4CDF1 effect_explosion_large_teslacleaver
+1B0B411C AMB_cobweb_vcorner_high
+1B506B8C muzzleblast_rocket
+1B64B850 steam_horiz_medium_2
+1BA8633A RangedBasic
+1BB2C560 greengas_puddle_medium
+1C007544 charge_hvenergy_large
+1C8CFAFD greengas_puddle_shortlife
+1C96A3A3 Door
+1CAE099E sparks_charging_red
+1CAE63C7 bullet_charged_contfirelaser
+1CD0AC94 RUINS_1
+1CD0AC96 RUINS_3
+1CD0AC97 RUINS_2
+1CDB7CF1 Boots
+1D032411 fire light
+1D0D7F8A Light Energy Ammo
+1D0FE1B8 muzzleblast_huntingrifle
+1D321484 BRK_board_pile_5340
+1D321485 BRK_board_pile_5341
+1D5A115A effect_spawn_scorpionmound
+1D5BA211 gibchunks_insect_totalgib
+1D7720B3 effect_blobspray_vert_small
+1D835B98 pickup_ammo_flame_2
+1D835B99 pickup_ammo_flame_3
+1D835B9C pickup_ammo_flame_6
+1D835B9E pickup_ammo_flame_4
+1D835B9F pickup_ammo_flame_5
+1D8B9DF3 creature_mutant_super_rocket2
+1D984E83 creature_mutant_blob_boss_eyes
+1DB3C54D Riot Gauntlets
+1E12ABD9 BRK_chair_wood_7203
+1E47430E landmine_gasgrenade
+1E5D2574 fire_trail_danny1
+1EA8B0B0 CYCLE_ComputerBank_Lights_7684
+1EB6B48C LIGHT_yellow_strobe
+1F2D72DB MOV_barrel_waste_1b_5325
+1F676AF9 laser_wall
+1F6D2536 effect_water_horiz_large
+1F844AC0 BRK_crate_plastic_small_closed_7502
+1F844AC1 BRK_crate_plastic_small_closed_7503
+1FD3E1F2 Goo_Large_Open_Floor_7813
+1FD56586 bullet_pistol_hmpistol
+203A457D trigger_laser_red
+20417945 laser_red_heavy_trap
+20A0A6E1 creature_ghoul_thug_hmlaserrifle
+20A7E872 Home-Made Laser Pistol
+20D5F125 EXP_Oil_Barrel_5314
+211D92F3 bullet_charged_plasmarifle
+2135F83E effect_steam_white_large
+213F2429 cain_armor_power_arms
+21461E28 flamethrowereffect
+214A4487 creature_deathclaw_chameleon
+215016C6 sparks_bullet_wall_hit
+21577A83 Leather Helmet
+21787D3F gibchunks_mutant_totalgib_attis
+2182D813 cw_mutant_HMaxe
+218F4C45 effect_damage_greenblood_blunt
+2191A6D3 Prison Key
+21A7F594 Driving
+21AC1024 lightning_arc_large_2
+21AC1025 lightning_arc_large_3
+21BD7962 steam_horiz_medium_blue
+21CB793D yellow_fire_medium
+223F2420 MammaDeathclawAI
+227B9BA0 gibchunks_ghoul_totalgib
+22A486EE MeleeBasic
+2305872A creature_brahmin
+2327137B gibchunks_human_totalgib
+2387A7E8 gen_light_radiation_medium
+2392B7C9 idle_sparks
+23E7D627 BRK_desk_small_7050
+23F8954B Red Ryder BB Gun
+240EBF22 effect_damage_redblood_sharp
+24BC98E6 grn_win10
+24EAC081 Dual Sub-Machine Guns
+24EAC09F Dual Sub-Machine Guns
+24FFCF03 hammer_energy
+252F9311 bullet_rocket_shredder
+25577260 VTWAREHOUSE_2
+25577263 VTWAREHOUSE_1
+257AE748 Heat Vision Goggles
+257FB959 explosion_totalgib_big
+259C3C21 creature_dog_bestfriend
+25E23822 Tesla Cleaver
+25FC0748 greenblood_damage_sharp_attis
+261E5BF1 chim_test
+267DEC0D greengoo_horiz_large
+269287ED muzzleblast_combatshotgun
+26BEBBA4 glow_blue_line
+26D9C0D8 BRK_Residential_Wall
+26FD9752 greengoo_dripping_small
+2707A3CB Vault Door
+2707A3CC Vault Door
+2707A3CD Vault Door
+27249940 Pants
+2753F7DD Locker
+275D5C57 CYCLE_DoorSwitch_7950
+27636CEB Speciman_Tank_Large_Pip_Boy_7699
+27A3DD18 Broken Metal Gate
+281FE878 effect_laser_instakill
+28394F3B cw_pistol2_smbl_raidergun
+286681F2 mist_white
+28AA10E7 muzzle_smoke_smbullet
+28BC514F Environment Gauntlets
+28EB713C effect_fire_torch
+290F4A7F muzzleblast_plasmarifle
+29395822 effect_fountain
+294E980A Heavy Energy Ammo
+295A857E ZPOGO_TEST
+29704F44 creature_deathclaw_adolescent
+29762600 fire_trail_flamethrower
+2982D520 body_fire_long
+29B0A420 effect_dripping_water_small
+29C1068D cain_armor_power_head
+29CCC593 muzzle_blast_rocket_2
+29FD5836 Gold Ring
+2A06AB4E WIN_VaultLab_Wall
+2A4C0AB0 creature_raider_soldier_rifle2
+2A73DDC7 light_explosion_medium
+2A889C5D Switch
+2A889C5E Switch
+2AC5E286 bullet_gatling_machinegun
+2AEB32BC Wasteland Man
+2AF8249D Computer Switch
+2B216157 effect_explosion_small_sledge
+2B24F81B smoke_grey_small_line
+2B270D82 Dresser
+2B2B7CA2 LIGHT_teal_large
+2B59D326 Cloth Boots
+2B77E783 streetlight overhang
+2B8A729D torchlight
+2BB5DFF6 effect_blobspray_horiz_large
+2BC53ACA Leather Helmet
+2C3A88B8 greengas_vert_medium
+2C62A1EC Car Trunk
+2CB33BA1 creature_deathclaw_mama
+2CD976FF flamethrower_muzzle
+2CE6AA4F Buffout
+2D1A2C8C effect_explosion_danny
+2D2586C4 hitworld_lgbullet
+2DB6BB9B BRK_bookcase_small_7000
+2DB6C1ED Wasteland Mayor's key
+2DD53B7D redblood_dripping_small
+2E16FCD5 effect_blue_line_2
+2E292E0E cw_normrat_claw_R
+2E292E10 cw_normrat_claw_L
+2E3EE45E idle_flamethrower
+2E4B13BE BRK_desk_large_wood_broked_7056
+2E5D4DE6 chunks_metal
+2E778176 smoke_large_fire_wall
+2EBBFB34 Spiked Sledgehammer
+2EC630CB Cloth Shirt and Pants
+2ECC7DB7 t_fre
+2ED554BF rock_large_emitter
+2F42B272 creature_rat_ghoul
+2F82891D ScriptControl
+2FB75071 shockwave_bluering
+2FBE0A90 gen_light_purple_medium
+2FC0FB5D doorspawn
+2FCFA15A MeleeCircling
+3006F1CD effect_smoke_window_north
+30316812 falling_rocks_small
+30405AC7 effect_chunks_glass_large
+30437091 greengas_puddle_small
+30A7CE3F bullet_gatling_contfirelaser
+3110DA44 cw_giantrat_claw_R
+3110DA5A cw_giantrat_claw_L
+312522E5 effect_piss_splash
+31529816 Radscorpion Tail
+316BC74B creature_rat_RED
+31BF4054 creature_ghoul_psycho_hmlaserrifle
+31D85AF7 glow_green
+31F12D12 CainClothesPantsShirt
+32070302 light_muzzle_blast_small_3
+32070303 light_muzzle_blast_small_2
+324549A1 bullet_rocket_plasmacannon
+324E41F8 AMB_cobweb_hanging_3
+324E41F9 AMB_cobweb_hanging_2
+324E41FA AMB_cobweb_hanging_1
+327972AC explosion_small_sparks
+328C76B0 landmine4
+328C76B1 landmine5
+328C76B2 landmine6
+328C76B3 landmine7
+328C76B6 landmine2
+328C76B7 landmine3
+328C76BC landmine8
+32978A88 glow_yellow_small
+32D21244 BRK_fence_wood_3ft_5062
+32D21245 BRK_fence_wood_3ft_5063
+32D21246 BRK_fence_wood_3ft_5060
+32D21247 BRK_fence_wood_3ft_5061
+32F3231B fire_window_east
+3300EEBF Geiger Counter
+3306C8B1 cw_normrat_bite
+331A4165 MOV_Cave_rock_large_2_7529
+333816A2 no_effect
+334451AD effect_explosion_dynamite
+337399F9 effect_greengoo_vert_small
+33985C12 rock_medium_emitter
+33B53000 effect_fire_shortlife
+33E8812B Combat Armor
+3458C300 gen_light_yellow_medium
+346E21AB Knife
+346FF49B landmine2_2
+347BDD3E BRK_Industrial_Wall
+34BDDDDA water_horiz_small
+34F27D53 Advanced Power Boots
+3501C70B dust_cloud_small
+3534E4E2 gibchunks_human_dripping
+3535D34C smoke_grey_medium_circle
+35399BA2 dust_cloud_verysmall
+356B611A creature_rat_brown
+35869A39 Cloth Helmet
+35CD805A Power Helmet
+35E4151F projtrail_rocket
+35EAB37D effect_chunks_ghoul_light
+3608D640 chunks_metal_fueltank
+360C5F6A Leather Gauntlets
+3614115F effect_yellow_line
+361C5CEA bullet_rocket_firemortar
+363B2744 MOV_barrel_oil_2b_5323
+365A1EA7 PipBoy_hologram
+36880FD0 effect_dripping_water_large
+36A9C10D cw_giantroach_claw_R
+36A9C113 cw_giantroach_claw_L
+36AAC4F0 creature_raider_thug_rifle
+36D2B43B light_sparks_small
+36D89AD8 world_light_MILL_BOSS
+3717E008 CYCLE_WallMonitor_7661
+3717E009 CYCLE_WallMonitor_7660
+3717E00B CYCLE_WallMonitor_7662
+371E6A18 RockCrusher_6040LA
+37427C2C AMB_mushrooms_large
+374DB431 WastelandMayorAI
+37791AC5 redblood_damage_blunt
+37FF0D01 sparks_bullet_breakable_hit
+3803A82A BRK_table_small_round_broken_7024
+3808E4B1 Beretta
+380BF4A4 effect_dripping_oil_small
+3815A0B6 FACILITIES_BOSS
+38217682 CYCLE_40_VOff_II_2H
+38217684 CYCLE_40_VOff_II_2N
+382E4D2C Ripper
+3841F75E CYCLE_40_VOff_II_4J
+38607243 Corona_19_IntDiner_IW_2B
+386DF718 cw_mutantblob_tentacle2
+386DF71B cw_mutantblob_tentacle1
+3882DC6D cw_mutant_fist_powerfist_R
+3882DC73 cw_mutant_fist_powerfist_L
+38952440 CYCLE_Chemical_Process_Machinery_7690
+38C18509 world_light_DOCKS_1
+38D3FCE0 gen_light_green_saveconsol
+390B0034 Speciman_Tank_Large_Empty_7695
+391A4285 effect_cloud_dust_small
+3945DC35 Vault Library Shelf
+39682C6B bullet_pistol_laserpistol
+396A2DB3 creature_rat_giant
+396B239E mutant_bullet_plasmacannon
+39909EA7 BRK_crate_plastic_medium_closed_7507
+39909EA8 BRK_crate_plastic_medium_closed_7508
+39FAB82D Giese, Ghoul Engineer
+3A152D73 Static Grenade
+3A1CA816 creature_vulture_perch
+3A3F0968 Dresser
+3A4D3D3B fireballexplode
+3A5C8B20 cloths
+3A99FA34 gibchunks_totalgib_attis
+3AD31A9F effect_damage_firehit
+3AE7E2E1 creature_raider_soldier_rifle
+3AF422E2 projtrail_ltenergy
+3AF56D35 creature_vulture_fly
+3B22EEAC creature_robot_kamikaze
+3B3D7909 smoke_grey_large_line
+3B638121 Ching Tsun, Vault Scientist
+3BB19A53 effect_red_forcefield
+3BB543B5 LIGHT_blue_small
+3BF0EA8D Hieronymous, Ghoul Merchant
+3BFA1A50 small bullet
+3C00E189 IceCreamTruck
+3C10863E NadiaTeslaArmorBoots
+3C516839 CYCLE_Sci_fi_Television2_7576
+3C62FD7D cw_raider_hammer_spikedbat
+3C689848 effect_explosion_rocket
+3C8045EA barrelfireemiter
+3CA0C67B chunks_birdnest
+3CBA6739 sparks_falling
+3CE65E29 light_greengoo_large
+3CE84FB8 Speciman_Tank_Large_Creature_7698
+3CFE3823 bullet_rifle_m16assault
+3D1FAE9E redblood_damage_sharp
+3D22EEDA smoke
+3D493CE5 dirt_cloud_verysmall
+3D5F36A9 gen_light_dim_yellow_large
+3D68C971 Wasteland Woman
+3D9E2AAB greengoo_splash_medium
+3DAF5087 world_light_Cutscene
+3DB4EBAF MOV_barrel_oil_2_fire_5322
+3DE4C3B2 charge_mdenergy_small
+3E33A2F4 effect_greengas_horiz_small
+3E523632 glow_yellow_idle
+3E6907F5 fountain
+3EB4270C blue_fire_medium
+3EDDB421 effect_explosion_junkgrenade
+3EFE985D effect_explosion_kamikazighoul
+3F132A9E Deathclaw Egg
+3F1609C0 cw_attis_fist_R
+3F1609DE cw_attis_fist_L
+3F4D65BB effect_glow_red
+3F6086F1 Minigun
+3F8984AA glow_yellow_medium
+3FA284E0 Junk
+3FA284E5 Junk
+3FA284E6 Junk
+3FA284E7 Junk
+3FAD2213 DuckAndCover
+3FE356C0 pickup_generic_helmet
+3FF0F943 RadSpawner_9016
+3FFEC4C6 t_gaz
+404CE948 CeilingFan
+4050711E BRK_desk_large_wood_7055
+408E2372 LIGHT_green_saveconsol
+40CA6B3B piss_mutant
+40E9C517 bullet_pistol_deseagle
+41066B38 COL_medium
+410C0B23 MILL_BOSS
+41451C46 Office Door
+414B0651 effect_greengoo_vert_medium
+4152A0C7 WIN_ind_win03a
+4173208D WIN_ind_win01a
+4173208E WIN_ind_win01b
+42073736 smoke_vert_large
+420C1471 amb_tumbleweed
+4218B663 creature_dog_raider
+4247AC94 chunks_wood_chair
+4251ED68 CRATER_2
+4251ED6B CRATER_1
+426258C7 BRK_stockade_fence_damaged_5017
+4269FA88 effect_explosion_ltenergy
+427C187F sparks_charging_2
+429492DB effect_blobspray_vert_large
+429F592A cw_glowingghoul_throwgoo
+42F0E97B BRK_desk_small_broken_7051
+43D4FD49 creature_mutant_grunt_hand
+43F9ABB9 GARDEN
+441626B7 effect_greengas_vert_medium
+44185F46 Combat Gauntlets
+4429A3EB Advanced Power Helmet
+44730CDD effect_greengas_puddle_large
+44A40FC3 LIGHT_yellow_xlarge
+45166560 AMB_cobweb_vcorner_low
+454F26A5 Advanced Power Armor
+4558AEA0 effect_chunks_insect_heavy
+456FE377 barrel fire
+4574167C cain_armor_combat_legs
+462723DF muzzleblast_shotgun
+462CF4A6 explosion_water
+46595302 Hieronymous, Ghoul Merchant
+4694CCF5 charge_lightning_blue
+46B906AE explosion_small_flash
+46BB91D1 bullet_charged_hmlaserrifle
+46DB86AF cain_armor_metal_head
+47041A97 Mutant_Roach_Spawner_7944
+4719F9D8 BRK_park_bench_wood_5052
+47242444 Rocket Ammo
+47542126 creature_mutant_grunt_gatling2
+47D5AFBF gen_light_purple_xlarge
+47DF8D06 sparks emitter
+47FFB7E0 effect_nothing
+48348D3E effect_footstep_dust
+48355D25 BRK_Birdnest_5366
+4844C483 cw_rifle_mel_ghoulgun
+48530A08 creature_robot_plasma
+485525B7 Fuel Ammo
+4868FDA3 gen_light_red_xlarge
+487279FA muzzle_smoke_lgbullet_4
+487279FC muzzle_smoke_lgbullet_2
+487279FD muzzle_smoke_lgbullet_3
+4879D099 Plasma Saw
+48C9755B effect_chunks_mutant_light
+49195028 MILL_4
+4919502D MILL_1
+4919502E MILL_2
+4919502F MILL_3
+49206BD4 Environment Boots
+4928C567 world_light_wareh_1a
+492EB73B WIN_IntWare_02a
+49490D9B bullet_rocket_rocket
+4951EB3F Power Helmet
+4968E365 gibchunks_mutant_light
+49B4886B shockwave_small_blue
+49DE2B24 creature_roach_giant
+4A188675 Home-Made Rifle
+4A7F5EE1 light_sparks_medium_blue
+4A8D1B3E gibchunks_rocks_small
+4A97D97F blackblood_dripping_medium
+4AC07642 yellow_fire_small
+4AC1DC33 blackblood_dripping_small
+4AEEFBE7 BRK_stockade_fence_5015
+4B5675F4 wood_emitter
+4B589A6D NPC
+4B667536 trap_instakill_energy
+4B7CFCED gen_light_yellow_strobe
+4BADBAC4 Rhombus
+4BAE37C3 creature_mutant_general_hammer
+4BEA731F water_vert_medium
+4C27A159 greengoo_dripping_large
+4C3D6AAC MOV_barrel_waste_1_5324
+4C451C75 green_spew
+4C5CEA6F fire_large
+4C91FD26 effect_explosion_firemortar
+4C96776C chunks_metal_fraggrenade
+4C9DFF3A fire_small_barrel
+4CC46E8A charge_hvenergy_small
+4CD86F74 smoke_medium_fire
+4CE02096 effect_sparks_vert_small
+4CE4C031 Riot Boots
+4D130896 projtrail_flamethrower
+4D30AB64 effect_sparks_vert_medium
+4D880940 cain_armor_tesla_legs
+4D965449 effect_greengas_horiz_medium
+4DB272AA sparks_charging_blue
+4DBEF92F idle_ltenergy
+4DC3F461 shockwave_large
+4DCDEC4F cw_mutant_fist_sawfist_R
+4DCDEC51 cw_mutant_fist_sawfist_L
+4DDD3325 effect_nothing_firebarrel_damage
+4DE7499B blob_archway
+4E578EFA cw_pistol_mel_ghoulgun
+4E7DEB73 pickup_quest_emergency_keycard
+4E802AAB water_horiz_medium
+4EB932BA rocket
+4EC921DA Fricking_LASER_Beam
+4ECFEDDB muzzleblast_scorpionspit
+4EECFA50 muzzleblast_deseagle_nolight
+4EF2F73E trap_greengoo
+4F00166B redblood_dripping_large
+4F6DFE30 creature_ghoul_thug_rifle
+4F9E6B0C creature_ambient_roach
+4FB0E88F steam_horiz_danny
+4FD67924 trap_greengas
+4FE5246F chunks_color_blue
+4FE59141 Collapsed_HOLE_wall
+4FE7133E gen_light_blue_small
+50C2B98E StealthBoy Device
+512D397A body_distort
+51398A7B Vault Dweller
+516B7D8D muzzleblast_shredder
+51CCC401 bullet_pistol_hmlaserpistol
+51DE38FD Metal Boots
+5236F2CD dust_cloud_medium
+52786DF0 MutantGeneralAI
+527AE9C9 cw_addeathclaw_claw_L
+527AE9D7 cw_addeathclaw_claw_R
+52ADFBC1 effect_greenfire_vert_medium
+52BAFE33 projtrail_plasmacannon
+52E65FD7 Leather Armor
+531DE429 gen_light_green_xlarge
+532F75BC MOV_Barrel_Waste_1b_side_5315
+532F75BE MOV_Barrel_Waste_1b_side_5317
+538D72EF sparks_horiz_small
+539C7676 cw_wastelanddog_bite
+53BC4C92 effect_explosion_computer
+53DB84AE glow_red_large
+53DFC2A9 effect_explosion_plastique
+53EA85E5 effect_blobspray_horiz_medium
+54099E97 creatureproj_scorpionspit
+541CBAB2 Small Bullet Ammo
+541E896C barrel
+5460FB28 MOV_barrel_oil_1_fire_5320
+546272DB cw_bestfrienddog_bite
+5476FD95 creature_radscorpion_spawn
+548D3F38 body_speed
+5499AD94 Gloves
+54BA6A33 creature_mutant_super_gatling2
+54C8F2CC Advanced Power Armor
+54CCE96A gen_light_green_large
+5543CD57 WoodenPlanks
+554CA037 effect_damage_blackblood_sharp
+556F7509 fire_trail_rocket
+55AAFC2A small bullet ammo
+56700AD8 landmine_firegrenade
+568B0264 blob_medium_1
+568B0266 blob_medium_3
+568B0267 blob_medium_2
+56BF0124 chunks_metal_junkgrenade
+572838F3 Environment Helmet
+57632888 Freezer Chest
+5789FD53 Crane
+57B47E2A trap_lightning
+57EDD7AC LIGHT_red_medium
+58D81FE9 bullet_gatling_flamethrower
+58FC4145 effect_greengas_vert_large
+590DCC10 cult_object_4_glass_top_5817
+5983A9E1 Fisher, Ghoul Officer
+598F5A2E effect_explosion_blakehammer
+59A25F2A creature_robot_patrol_2
+59A25F2B creature_robot_patrol_3
+59B45AA4 DOCKS_1
+59B45AA6 DOCKS_3
+59B45AA7 DOCKS_2
+5A0A7246 effect_chunks_robot_totalgib
+5A1D3789 sparks_charging_green_small
+5A6935BB explosion_greengoo
+5A8F6DE2 Metal Armor
+5AD36AF9 effect_explosion_plasmacan
+5AEDBB34 world_light_darkness
+5AF2FD9A idle_torch
+5B2BB059 hit_fire_torch
+5B353CD3 chunks_wood_box_medium
+5B3FEEEB CYCLE_40_VOff_II_1JN
+5B44A7B2 CYCLE_VLab_G_133
+5B44A7B4 CYCLE_VLab_G_135
+5B44A7B7 CYCLE_VLab_G_136
+5BD78F0F BRK_table_small_square_broken_7021
+5BF14931 effect_laser_red_large
+5C19BAD1 BRK_bookcase_small_broken_7001
+5C5CB21C world_light_MILL_3_RED
+5CB610A7 explosion_totalgib_mutant_attis
+5D082246 trap_steam_medium
+5D15AFBD AAA_WindowTest
+5D77373E plasma_spray_small
+5DA94B4B Vault Man
+5DB43B61 creature_mutant_soldier_hand
+5DC323A1 effect_chunks_insect_totalgib
+5DE879ED effect_greengoo_vert_large
+5DEA9A90 Metal Armor
+5DF9EBFC redblood_dripping_medium
+5E05B6CF muzzleblast_hmlaserrifle
+5E51B397 distort_BGDA
+5EAED95C chunks_color_green
+5EDE322B trap_laser
+5F5D05C7 Win_19_IntDiner_IW_3B
+5F61FAC9 effect_blobspray_horiz_small
+5F7D859D Win_19_IntDiner_IW_1B
+5FAFA5D5 largebullet
+5FF0AE42 RangedRunAndCover
+60035EA7 Motion Sensor
+600D2059 effect_water_splash_small
+603F59E5 Tarp_4016
+60801A9F creature_ghoul_kamakazi
+60A0EE25 trigger_laser_green
+60C56440 effect_greengoo_splash_medium
+60E1ADB2 bullet_rifle_hmmachine
+6124B21C BRK_stockade_fence_broken_5016
+615404C9 chunks_glass_small
+61DDA35C FOG_smoke
+62149E45 effect_chunks_rocks_small
+621F0E63 Armpit, Wasteland Bartender
+6249BE75 creature_rat_black
+626BD294 Combat Helmet
+62873104 Fists
+6287311A Fists
+62968038 Ruins Keycard
+62974D1F creature_brahmin_pin
+62A07278 player_robot_service_1
+62A0727A player_robot_service_3
+62A366AF Dual Berettas
+62A366B1 Dual Berettas
+62BFC9C9 creature_mutant_super_gatling
+62D72EA6 bullet_charged_plasmacannon
+62EC53AA Frag Grenade
+6316507A effect_TEST_EFFECT
+6326BB0E effect_explosion_hvenergy
+6344EDED AMB_mushrooms_small
+636BE7C8 muzzleblast_smaller
+63ACC07D LIGHT_dim_yellow_large
+63D76677 Super Stimpak
+6400AD40 doortest
+640639A1 MOV_Barrel_Oil_2b_side_5316
+6432DF18 Riot Gauntlets
+643665E5 Mega Power Fists
+643665FB Mega Power Fists
+647BB239 creature_ghoul_psycho_monripper
+6483177B Mary
+648B7269 creature_ambient_vulture_perched
+64936860 muzzleblast_deseagle
+649CF066 Dynamite
+64D3886D greengas_horiz_medium
+64ECF308 greengoo_vert_small
+64F3EE16 LIGHT_street_verticle
+6512DF1E Medical Supplies
+651CCFAC sparks_horiz_large
+6528A1E3 glow_blue_2
+652C0AC2 gibchunks_ghoul_dripping
+6531358B smoke_torch
+6570CA53 Power Boots
+6585D3D7 Player
+65BB5FF4 BRK_table_small_square_damaged_7022
+6640AA63 Rad-X
+667F1571 effect_fire_kamikazighoul
+66824D0E Cleaver
+668962C8 sparks_charging_red_2
+66DA7261 cw_kamikazighoul_explode
+6709DC07 effect_chunks_plastic_box_1
+670FF250 pickup_quest_town_gate_key
+674B8A4E effect_steam_horiz_large
+6755DDAA muzzleblast_smg_nolight
+677C3BBC bullet_rocket_hmrocket
+67853B4C cw_ghoul_priest_spikedbeam
+67C2D26A effect_fire_large_wall
+67CC4807 BRK_bookcase_medium_7003
+67D8C062 Win_19_IntDiner_IC_1B_b
+67D8C063 Win_19_IntDiner_IC_1B_c
+67E1F0AC cain_armor_riot_head
+68108F95 yellowblood_damage_sharp
+6825420E creature_mutant_soldier_hammer2
+684AA811 BRK_board_fence_5014
+684AA814 BRK_board_fence_5011
+684AA815 BRK_board_fence_5010
+684AA816 BRK_board_fence_5013
+684AA817 BRK_board_fence_5012
+6865AFE7 effect_greengoo_puddle_small
+6865B1DE DustEmitter
+68A528BE creature_raider_torch_hammer
+68ADFC08 Shower_Glass_7552
+68B85417 BRK_barrel_wood_5338
+68C3316E effect_water_drops
+68F4F5DA hammer_fire
+690E6E6B DOCKS_BOSS
+691711AB chunks_BRK_Wall_1
+691F2E6C creature_raider_lieutnt_hand
+6920CC0D Broken Residential Door
+6933E47E SPAWN_general
+696E7C51 LIGHT_yellow_large
+69C539C4 smoke_small_weapon
+69E867C9 muzzleblast_hvyminigun
+69F6A6D5 Cloth Gloves
+6A2E40F6 explosion_medium_longfire
+6A3E77F0 RESIDENCE_BOSS
+6A5E6C7E Brotherhood Paladin Hologram
+6A702F7F Wasteland Man
+6A7F6782 effect_break_Wall_1
+6A88BFB2 BRK_box_wood_medium_7101
+6A91312C atom_cloud
+6AB79C1B spit
+6ABAF75F creature_ambient_vulture
+6AEE48D8 bullet_rifle_hmpiperifle
+6B1C7A11 fire_wall_hit
+6B9B3908 Environment Boots
+6BA432F9 BRK_IMillOffce_CI_1A
+6BE5B008 greenblood_damage_blunt
+6C04562C effect_chunks_glass_small
+6C1EB7B4 BRK_mirror_7043
+6C3170B3 COR_StreetLight
+6C3740B7 Riot Armor
+6C3C3CFA effect_dripping_greengoo_large
+6C660896 Plastique
+6C94A641 TOWN_1b
+6C94A642 TOWN_1a
+6CE48B1D WIN_VaultRes_Office
+6CE7DBD7 BRK_blockbench_7201
+6CEA93C1 Vault Woman
+6D60C92F greengas_puddle_large
+6D65354D yellowblood_damage_blunt
+6D91C7DF chunks_wood_box_large_2
+6DBBFF25 t_vul
+6DDB9258 test3
+6DDB9259 test2
+6DDB925A test1
+6DDB925E test5
+6DDB925F test4
+6E3A263F BRK_desk_small_damaged_7052
+6E738B8D landmine_junkgrenade
+6EA28FD6 Chain Link Gate
+6EF03F34 effect_plasma_spray_large
+6EFEEB1A gibchunks_mutant_vert_spray
+6F071522 effect_spawn_ratsnest
+6F093513 effect_laser_blue_large
+6F1150D1 creature_ghoul_thug_ripper
+6F646611 muzzle_blast_rocket
+6F7F6B88 trap_greengas_medium
+6F89E5AA charge_ltenergy_large_2
+6FA53569 explosion_totalgib_mutant
+6FA68C50 mist_green
+6FBE41B8 muzzleblast_beretta_nolight
+6FD8402A creature_mutant_soldier_fist2
+6FF066EA smoke_bubbling_green
+6FFA0BD9 greengoo_horiz_large_2
+700A43B4 gen_light_white_medium
+70325915 gen_light_purple_large
+703FBFB0 smoke_medium
+70742B03 invisible_monster
+70877279 body_smoke
+70CEE2D1 BRK_box_cardboard_8002
+7107B5DA lightning_forcefield
+710E630A AMB_mushrooms_medium
+71129373 effect_fire_medium
+711EF1A3 effect_water_splash_large
+714D34C0 effect_break_largebox_2
+7189FD14 Flamethrower
+719FD674 rock_small_emitter
+71A00110 Computer Parts
+71B4A189 BRK_bookcase_small_damaged_7002
+71DC4BF2 BRK_crate_plastic_large_7510
+71DC4BF3 BRK_crate_plastic_large_7511
+71EFE3E1 MOV_barrel_waste_1_5324_test
+71FD175B Footlocker
+7228616A effect_break_smallbox
+72401C69 light_greengoo_small
+7281F9B0 effect_cloud_dust
+729B1A4A body_radioactive
+72C68EB8 chunks_color_yellow
+72FBF309 sparks_charging_green_medium
+734862A1 gen_light_red_medium
+735259CB Metal Helmet
+738275A1 Bottle Caps
+738275A7 Bottle Caps
+738275AB Bottle Caps
+7388E3AA Combat Helmet
+73B31E59 creature_mutant_blob_medium_1
+73B31E5A creature_mutant_blob_medium_2
+73B31E5B creature_mutant_blob_medium_3
+73B54860 bullet_rifle_shotgun
+73D4D2B4 Home-Made Machine Gun
+73F87891 LIGHT_orange_large
+73FBD6EB BRK_box_wood_large_7102
+74035541 test
+740ECD23 Large Bullet Ammo
+748B0B24 effect_explosion_expbarrel
+74A620C3 cleaver_fire
+7503A355 Tesla Armor
+7515ECBB effect_explosion_medium_teslacleaver
+75613B9F Metal Helmet
+756A3931 effect_steam_white_small
+758B3E1B Gate Key
+75BF16D7 Cain
+75DD1CA7 effect_greengas_puddle_small
+760212E2 MOV_Cave_rock_medium_3_7527
+7644B36F cain_armor_metal_arms
+765846DE water_horiz_large
+765D8558 gen_light_red_strobe
+7699D0B3 GhoulHighPriestAI
+76F3826E effect_steam_vert_medium
+770036A7 Combat Gauntlets
+7739D644 mutant_bullet_laserminigun
+77704A5B muzzle_scorpionspit
+7799C6A3 greenblood_damage_sharp
+77AADD9C gibchunks_robot_heavy
+77ADB496 testemitter
+77B1BC79 water_splash_large
+77D92292 hitworld_shotshell
+77E77FC3 muzzle_blast_shotshell
+77EF95B6 Tesla Boots
+780F35C4 Laboratory Keycard
+784208CD Dead Cat
+7846E909 effect_sparks_horiz_medium
+78865C22 FOG_test
+7897336A steam_vert_large
+78B50C75 creature_radscorpion_spitting
+78C7EFB8 TOWN_5
+78C7EFB9 TOWN_4
+78C7EFBB TOWN_6
+78C7EFBE TOWN_3
+78C7EFBF TOWN_2
+7926DE36 creature_mutant_super_rocket
+7926E68E Cloth Boots
+7938012F chunks_stone_bench
+795E3F5B effect_damage_yellowblood_sharp
+797D0123 smoke_large_fire
+799C897B evilnadia
+79A23FC7 explosion_medium_toxic
+79B8E318 WIN_grg_win05b
+79C03838 Ghoul-Grade Psycho
+79CC4BED cain_armor_combat_arms
+79EF8FC7 light_sparks_large_blue
+79F6D59C steam_vert_medium
+79F9E46C WIN_grg_win01b
+7A1A6426 WIN_grg_win03b
+7A2056AB LIGHT_white_small
+7A2DA702 Shredder
+7A77916A sparks_vert_small
+7AA68B9B effect_damage_greenblood_sharp
+7ABC0910 Garage Door
+7AC76E74 effect_greengoo_horiz_large_2
+7ACE9BD6 creature_raider_soldier_pistol
+7AE10C49 DOOR_VaultBulkhead_Invisible
+7AE449DA chunks_color_red
+7AE8071C Dynamite
+7B03CD7C effect_water_vert_large
+7B2AE6B0 effect_explosion_nukedevice
+7B483811 ISO_Container_withhook_7120
+7B745C2F pickup_ammo_rocket_2
+7B9D3AF7 Combat Armor
+7BA10517 effect_dripping_blood
+7BA92AE6 Speciman_Tank_Small_Rat_7693
+7BAE9EE0 effect_creature_launcher
+7BFFC02B effect_damage_woodprop_heavy
+7C0ED0A4 chunks_steam_horiz_medium
+7C35B766 effect_glow_green
+7C3785C8 spawn_scorpionmound
+7C403E22 creature_raider_torch_minigun
+7CCB2A7D WIN_IntMill02a
+7CCC53DA Monster Ripper
+7CD81832 effect_explosion_raidertorch
+7CF430A2 projtrail_plasmacannon_charged
+7D02F402 creature_ghoul_psycho_gatling
+7D1CD7C0 gibchunks_mutant_heavy
+7D464594 BRK_crate_plastic_large_closed_7513
+7D464595 BRK_crate_plastic_large_closed_7512
+7D71B117 Goo_Large_Corner_7815
+7D950B88 effect_smoke_medium
+7DAB1EBB explosion_large_smoke
+7DBF79FE effect_lightning_small
+7DDDC316 Home-Made Bomb
+7DEBD4D2 Table
+7DFCAFC7 smoke emitter
+7E39DF2F Office Door
+7E4874A7 bullet_pistol_raider
+7E5F8D37 effect_explosion_small_teslacleaver
+7E8E70DE distort_medium
+7EC7F972 effect_steam_horiz_small
+7EFDBDAB effect_cloud_dust_verysmall
+7F056C3C landmine_plasmagrenade
+7F1BF6EE destination_effect
+7F3215B1 Tesla Gauntlets
+7F47783F creature_mutant_grunt_gatling
+7F88E88C Ambient
+7F91E5C5 Dual Desert Eagles
+7F91E5DB Dual Desert Eagles
+7FB6CF2D NadiaMetalArmorBoots
+7FDBA096 smoke_window_fire_south
+7FFE697F Jane, Raider Matron
+80132D47 creature_raider_thug_pistol
+803E5F30 Advanced Power Gauntlets
+804C718F Speciman_Tank_Small_Empty_7691
+806AFB8C chunks_human_corpse
+806E3BF1 Advanced Power Helmet
+80748D74 test_lightning
+809B3407 smoke_window_south
+80C5A2C2 NadiaMetalArmorArms
+80FDFB60 smoke_window_east
+814AA942 effect_chunks_robot_light
+814EAB03 chunks_wood_table_square
+814FC036 BRK_park_bench_stone_5050
+819AE37A light_sparks_medium
+81D512A6 MOV_Cave_rock_medium_1_7525
+82018C85 cw_mutant_turretgun
+820E3E7E chunks_steam_horiz_large
+821CB8E7 effect_sparks_vert_large
+82782C39 flameeffect
+8287EF78 Cadillac_1959_Monster_3090
+8290FA6B explosion_verysmall_plasma
+82F9D63F pickup_BAWLS_Bottle_Cap
+832174FA idle_plasmacannon
+8326AE64 trap_mill_boss
+8344947C chunks_glass_medium
+8349AE64 Leather Gauntlets
+834A7ED6 Facilities Keycard
+834EC993 effect_water_horiz_small
+835FDDEF cw_normroach_claw_R
+835FDDF1 cw_normroach_claw_L
+83799007 Dual Laser Pistols
+83799019 Dual Laser Pistols
+838C2834 sparks_horiz_small_blue
+83A8C6C6 Windmill
+83B89443 Power Gauntlets
+8403BC0D gibchunks_ghoul_light
+844B03EF cain_armor_tesla_torso
+84692419 Turbo Plasma Rifle
+8481B4D3 creature_dog_ghoul
+8498C808 creature_robot_service_3
+8498C809 creature_robot_service_2
+8498C80A creature_robot_service_1
+84D73479 Car Trunk
+84E16C80 laser_red_2
+84E16C81 laser_red_3
+84F458CD Super Sledge
+84FA9C1B effect_steam_white_medium
+84FBC6DC creature_mutant_soldier_hammer
+85038F0A cw_mamadeathclaw_tail
+8526B2EA effect_damage_woodprop_light
+85370F36 Cloth Boots
+855E3EFD bullet_charged_turboplasma
+85726527 steam_green
+858242F4 effect_cloud_dust_large
+85CCDDAF creature_mutant_super_fist
+85DB081C idle_mdenergy
+85E30792 Toxic Grenade
+861BBD1D heavyenergy
+8623BA97 effect_footstep_dirt
+86259700 Display_Case_1_Glass_5812
+86259703 Display_Case_1_Glass_5811
+864318B9 Metal Armor
+864C28F6 effect_chunks_insect_light
+865DECA7 bullet_rifle_combatshotgun
+868FA10B explosion_large_yellow
+86BA6684 Riot Gauntlets
+86C07E55 effect_fire_window_south
+86CC5AA8 LAB_2a
+86CC5AAB LAB_2b
+86FFABE2 gibchunks_insect_heavy
+8720A38A COL_large
+877376CF effect_explosion_meatcan
+87853610 INSTAKILL Pistol
+8793F67C effect_lightning_instakill
+87D2FA71 creature_mutant_super_hammer
+885313CB creature_mutant_soldier_gatling
+888C02C9 bloodemitter_corpse
+88A2BBE6 explosion_large_flash
+88AE7BEC cw_mutant_telephonepole_2600
+88BDB86D effect_fire_large_2
+8907401F smoke_small_barrel
+893DF12D smokeeffectemitter
+896460FB creature_robot_sentry
+8967FCA0 world_light_MILL_3
+8967FCA1 world_light_MILL_2
+8967FCA7 world_light_MILL_4
+8992ADAC redblood_damage_big
+89C75DE9 effect_steam_horiz_medium
+89F274DB distort_test
+8A056E60 Power Gauntlets
+8A1217EE shockwave_small
+8A234D4B EMP Device
+8A36A01F Metal Gauntlets
+8A7831DE projtrail_danny
+8A80B2A5 laser_blue
+8A85FE38 effect_smoke_window_south
+8A8B37E5 creature_mutant_blob_single_eye
+8AACE8E4 Plasma Rifle
+8ABCE8D0 Vault Computer Keycard
+8ADCD549 body_fire
+8ADDA741 NadiaMetalArmorBody
+8ADDF38D smoke_grey_small_circle
+8AF44DEE fire_medium
+8B25D237 greengas_vert_large
+8B758EDB LAB_1
+8B758EDE LAB_4
+8B8DB3EF gen_light_radiation_small
+8BB1F001 gen_light_blue_medium
+8BB38F60 Metal Boots
+8BFD33CF effect_chunks_glass_medium
+8C37A451 greengoo_horiz_medium_2
+8C3ADB6A WIN_grn_win02b
+8C4ACA2E COR_General_Streak_small
+8C5B5B34 WIN_grn_win04b
+8C5B5B35 WIN_grn_win04c
+8C6F5666 pickup_BAWLS_Bottle
+8C8BF717 creature_ghoul_thug_spectator
+8C9C5B88 WIN_grn_win08b
+8CB04455 trap_laser_large
+8CB89750 light_muzzle_blast_small_noflicker
+8CC24589 Patty, Vault Security
+8CFF8041 laser_blue_heavy
+8D0CD5C5 barrelfireemiter_2
+8D197B59 steam_horiz_large_2
+8D273D76 effect_fountain_top
+8D302627 effect_chunks_human_light
+8D306EED lightning_blue
+8D49E9D1 charge_ltenergy_large
+8D558CD5 AMB_cobweb_wall_high
+8D835D63 chunks_glass_large
+8DA76DBF Rocket Launcher
+8DBBF4F5 t_han
+8DCFDEF5 fire_trail
+8DD047F6 muzzleblast_laserpistol
+8DDF6FF5 Car Trunk
+8E0B3C4B DOOR_Warehouse_Garage_Wide
+8E344608 effect_footstep_greengoo
+8E350C39 chunks_color_white
+8E39B2EB Leather Boots
+8E52879E greengas_horiz_large
+8E5F5606 charge_mdenergy_medium
+8E972E05 amb_dinner_sleep1
+8E9A048A amb_vault_woman_laying
+8EAE3281 gibchunks_human_heavy
+8EBB0410 cw_mutant_hvygatling
+8EC9AED7 Shield Generator
+8EE03BAD MOV_Cave_rock_small_1_7521
+8EEA5671 effect_water_falling
+8F12B7A8 chunks_color_black
+8F18EBF7 effect_damage_blackblood_blunt
+8F3B7765 Brotherhood Insignia
+8F53F26A glow_white
+8F5650DE cw_mutant_hvyminigun
+8F58872F Cloth Helmet
+8FC24DF0 effect_fire_fuse_2
+8FF8943A muzzleblast_teslarobot
+9019A8BC creature_roach_normal
+904854A5 lightning_TEST
+9079F6B2 Dresser
+90929D70 chunks_plastic_box_1
+9095D380 MOV_barrel_oil_1b_5321
+90A3CFB2 Rotten Arm
+90A94EEE gen_light_blue_large
+90F26D54 effect_explosion_empdevice
+91022A8F creature_ghoul_glowing
+9136DC52 effect_greengas_puddle_medium
+91A7CADC creature_raider_thug_hand
+921B4B49 BRK_television_7049
+9236588D Vault 13 Flask
+925E0D8D BRK_crate_plastic_radioactive_1_7515
+92735F46 effect_glow_blue_highlight
+92778E98 creature_ambient_rabbit
+92DAC17E creature_ambient_rat
+931ED0E3 light_firelight_orange
+932A5A8C t_cor
+9339670D Corona_16_Warehouse
+936611BC Riot Helmet
+937BEE0F Leather Armor
+937DFC0A flamethrowereffect_2
+93C483E0 WIN_bld_win03b
+93C58FE8 creature_chunker_human_invisible
+93CD9760 player_robot_patrol
+93DD5C39 light_explosion_hot_flash
+93EEB3C4 Flame
+94094263 Mentats
+94128CCE PipBoy
+9444232E chunks_wood_largedesk
+94535B34 Leather Armor
+9459F170 effect_fire_small_blue_pilot
+94800027 sandybreezeemitter
+949D50AE Combat Knife
+94B8F52D bullet_rifle_huntingrifle
+94E1DC6C cw_attis_plasmacannon_R
+94E1DC72 cw_attis_plasmacannon_L
+94F6F69C Frag Grenade
+94FC4C82 projtrail_hvenergy_charged
+9589B139 gen_light_teal_large
+95A4619C Win_19_IntDiner_ID_1B
+95C14BD9 charge_ltenergy_medium
+95D13F6F Filing Cabinet
+95F9B1CC Leather Gauntlets
+96262898 Ghoul Civilian
+963689E0 effect_plasma_spray_medium
+96523243 Cloth Gloves
+965C79E7 glow_yellow_shockwave
+9660896A Gate Key
+96717105 cw_spitradscorpion_spit
+972F30E0 SpecimenTank_7701
+972F30E1 SpecimenTank_7700
+97325D35 creature_raider_lieutnt_rifle
+97458EE4 fountain_top
+9748C4AD fireemitter2
+974D2D44 Power Helmet
+9765C419 effect_greengoo_splash_large
+97BB833B yellow_fire_large
+97C2FDC2 effect_dripping_blood_large
+97E574EB smoke_window
+98023883 creature_mutant_blob_tentacle_one
+982964FB LIGHT_fire_orange
+983E290E cw_mutant_spikedbeam
+985351EE Vault Library Shelf
+9857DF9A muzzleblast_hmmachine
+98C7F335 creature_mutant_blob_mouth
+98CB4CE4 CYCLE_WallMonitor_Screen_7653
+98CB4CE5 CYCLE_WallMonitor_Screen_7652
+98CB4CE6 CYCLE_WallMonitor_Screen_7651
+98CB4CE7 CYCLE_WallMonitor_Screen_7650
+98DC8CBC LIGHT_street_overhang
+98E02EE6 smoke_window_fire_east
+98F9C790 gen_light_teal_medium
+992D80CC explosion_medium_sparks
+9934C546 cw_normradscorpion_tail
+993D3A67 effect_greengas_horiz_medium_2
+99518D89 gibchunks_mutant_horiz_spray
+99827AAB effect_blue_line
+9985DB02 MOV_barrel_waste_3b_5329
+99F516A9 WAREHOUSE_BOSS
+9A0AE3E8 blob_small_3
+9A0AE3E9 blob_small_2
+9A0AE3EA blob_small_1
+9A0EF838 chunks_wood_box_small
+9A2A6A32 distort_trail
+9A4EA5F7 Shotgun Shell Ammo
+9A5CEA2C Wasteland Wanderer
+9A6948A0 grg_win02
+9A6948A1 grg_win03
+9A6948A3 grg_win01
+9A6948A6 grg_win04
+9A6948A7 grg_win05
+9A6FC207 sparks_vert_medium
+9ABF68CD explosion_large_longfire
+9B24F439 creature_raider_drunk_hammer2
+9B24F43A creature_raider_drunk_hammer1
+9B2652B3 lightning_arc_small_2
+9B616247 Shop_Tec_Computer_1260
+9B83862D Combat Boots
+9BAD2489 Toxic Grenade
+9C50DE90 bullet_gatling_turboplasma
+9C60FD97 creature_deathclaw_egg
+9C678788 cw_mutant_plasmacannon
+9C831336 effect_smoke_window_west
+9CA6B403 Riot Boots
+9CCE9703 effect_sparks_horiz_small
+9CD86834 piss_splash
+9CDBFD07 effect_explosion_gasgrenade
+9CE66E91 amb_dinner_talking1a
+9CE66E92 amb_dinner_talking1b
+9CE8CBFE effect_laser_green_small
+9CF550D3 LIGHT_red_strobe
+9CF7BCC8 BRK_park_bench_wood_broken_5053
+9D050F33 NOBRK_wood_pallet_5330
+9D1FC1B1 Environment Boots
+9D216E86 gen_light_yellow_large
+9D69A331 Rhombus, Brotherhood Paladin
+9D81FDD9 effect_explosion_large_sledge
+9D90ADF5 greengas_horiz_small
+9D9D70AB cain_armor_riot_legs
+9DDA54D7 steam_horiz_medium
+9DF7530C amb_town_wastenose
+9E004DD0 creature_mutant_blob_wall
+9E1369B9 Shop-Tec Parts
+9E2AD077 cain_armor_tesla_arms
+9E6A7010 LIGHT_blue_xlarge
+9E95E1DE Tesla Gauntlets
+9EB48E9F greengoo_horiz_medium
+9F0B8600 COR_General_Cone
+9F280CAB LIGHT_white_large
+9F2AD7AD LIGHT_fire
+9F8279F6 gen_light_white_xlarge_2
+9F963296 effect_chunks_robot_heavy
+9FBEF895 toxicsmoke_green
+9FF44452 CRATER_BOSS
+A007266F smoke_grey_large_circle
+A0202E2C Torn Paper
+A0202E2F Torn Paper
+A02FC75F effect_damage_yellowblood_blunt
+A080D53D lightning_trap_broke_comp
+A084FD42 laser_green_trap
+A08A8CA3 explosion_medium_smoke
+A116D10D bullet_gatling_hvyminigun
+A120EA82 mutant_bullet_napalmlaunch
+A13184BE dust_cloud_large
+A1D715B6 greengas_vert_large_attis
+A217BD0E gibchunks_robot_light
+A23F482E explosion_medium_sparks_3
+A23F482F explosion_medium_sparks_2
+A2409255 effect_greengoo_puddle_medium
+A250EAEA laser_red_heavy
+A29B38C8 Jesse, Wasteland Trader
+A29B38CB Jesse, Wasteland Trader
+A2B0FF53 bullet_pistol_instakill
+A2BB472E gen_light_blue_xlarge
+A2DDC358 effect_steam_vert_large
+A2F51D6D effect_explosion_fraggrenade
+A2FF4BEA Clothes
+A368D9ED falling_rocks_medium
+A370E380 BRK_crate_plastic_medium_7506
+A370E383 BRK_crate_plastic_medium_7505
+A370EEF9 projtrail_hvenergy
+A37252A5 cw_mamadeathclaw_mouth
+A3C6C189 Shiv
+A45EEF82 trap_steam
+A48C4E37 creature_radscorpion_normal
+A48DAB49 Patty, Vault Security
+A49FB15E LIGHT_green_small
+A4AC5880 grn_win03
+A4AC5881 grn_win02
+A4AC5882 grn_win01
+A4AC5884 grn_win07
+A4AC5885 grn_win06
+A4AC5886 grn_win05
+A4AC5887 grn_win04
+A4AC588A grn_win09
+A4AC588B grn_win08
+A524E7E1 Ghoul Civilian
+A53BCE53 cw_glowingghoul_fist_R
+A5BAEC8A BRK_Warehouse_Wall
+A5C0E862 Speciman_Tank_Small_Spider_7694
+A5C59EAD chunks_wood_explosion
+A5C60D17 distort_small
+A5E2715F NadiaTeslaArmorBody
+A5EA523F Test_Gazda
+A67BBC98 shockwave_large_green
+A69B1D26 Riot Armor
+A69D5ED1 creature_raider_thug_hammer1
+A69D5ED2 creature_raider_thug_hammer2
+A6A24405 wooden fence
+A714B7AA creature_ghoul_priest_hammer
+A7476116 world_light_default
+A78F712A BRK_bookcase_large_7006
+A791E51E smoke_torch_2
+A7CC4504 muzzleblast_machinegun
+A7F24DC4 light_greengoo_medium
+A80E2DB6 EMP Device
+A833BE24 muzzleblast_m16assault
+A8389762 Metal Gauntlets
+A843E005 NadiaTeslaArmorArms
+A86A5BA5 lightning_trap_mill_boss
+A876022F BRK_chair_lounge_7046
+A8C817B7 effect_smoke_small
+A8C818E8 creature_roach_mutant_giant
+A8CC05FB water_vert_small
+A8DDDBAC LIGHT_white_xlarge
+A8EBB637 creature_robot_turret
+A8ED0655 fire_window_north
+A9638052 Bottle Caps
+A9663C32 trap_greengas_large
+A9737618 cain_armor_leather_head
+A998B27D inventory_light
+AA24B6DB testlight
+AA28753E laser_red
+AA3638C0 effect_dripping_water
+AA761B63 EXP_box_wood_7099
+AA77F87C creature_mutant_blob_small_3
+AA77F87D creature_mutant_blob_small_2
+AA77F87E creature_mutant_blob_small_1
+AA88E576 Speciman_Tank_Small_Dog_7692
+AAACC344 effect_cloud_dirt_medium
+AAB5630A BRK_bookcase_medium_damaged_7005
+AB758CA3 creature_mutant_general_gatling
+ABC4ADE1 effect_greengas_horiz_large_2
+ABD1A9A2 Wasteland Dog
+ABD72E2A effect_damage_redblood_blunt
+ABE66972 BRK_InteriorMill_Wall
+ABE941B1 woodchunk_F
+ABE941B2 woodchunk_E
+ABE941B3 woodchunk_D
+ABE941B4 woodchunk_C
+ABE941B5 woodchunk_B
+ABE941B6 woodchunk_A
+AC05676E Advanced Power Armor
+AC15D64D LIGHT_green_medium
+AC517706 cw_turret_gun_R
+AC517718 cw_turret_gun_L
+AC89EDCD Mary, Vault Girl
+AC903CD1 effect_blobspray_vert_medium
+ACB6A93D creature_rat_normal
+ACE252B7 Incendiary Grenade
+ACECF8B9 explosion_medium_longsmoke
+ACF394CC effect_creature_launcher_2
+AD1142A0 cleaver_trail_2
+AD3D11A9 chunks_metal_box
+AD84A160 Nadia
+AD87F1F7 smoke_small
+ADB2442F gibchunks_spawnermound
+ADB4DEE5 explosion_medium_plasma
+ADB5CA34 fire_residue
+AE575DB4 gibchunks_robot_totalgib
+AE76FAFF cleaveremitter
+AEAC15F4 Rain_Light
+AEBC57D5 New_Prop
+AEC8D29D gibchunks_ghoul_horiz_spray
+AEE06742 bullet_charged_laserpistol
+AF1B2C72 muzzle_blast_smbullet_3
+AF1B2C74 muzzle_blast_smbullet_5
+AF1B2C75 muzzle_blast_smbullet_4
+AF1CBDCE smoke_window_fire
+AF243681 cw_mutant_napalm_launcer_2642
+AF3B55DE Rhombus_Chain_5818
+AF3FC298 MOV_rock_small_7521
+AF3FC29A MOV_rock_small_7523
+AF3FC29B MOV_rock_small_7522
+AF3FC29D MOV_rock_small_7524
+AF574422 Assault Rifle
+AF61F3CA MOV_Cave_rock_small_3_7523
+AF70D9C9 Rotten Eyeball
+AF718252 fire_small_residue
+AFAF6564 Shop-Tec Vending Computer
+AFAF6567 Shop-Tec Vending Computer
+AFD7AD25 effect_greenfire_vert_small
+B001615B trap_laser_medium
+B02042AE effect_water_vert_medium
+B035CE75 explodemine
+B0A27AFA xp2
+B0CFD6EC chunks_wood_dresser
+B0D2DCE7 dirt_cloud_medium
+B0D595F4 creature_mutant_nightkin_fist2
+B11108E3 Iron Gloves
+B11108FD Iron Gloves
+B1203068 RangedMobile
+B1260312 Fan
+B1370D58 torchflame_small
+B13DE6C8 projtrail_scorpionspit
+B158FE7B explosion_large_sparks
+B1986A62 Static Generator
+B1B3DC67 MOV_box_metal_large_7112
+B1D68DCD Plasma Cannon
+B1D779D9 sparks_horiz_large_blue
+B26C6339 Richard, Wasteland Mayor
+B2DD2293 WIN_VaultRes_Wall
+B2F52F4F water_splash_small
+B32E3910 effect_greengoo_horiz_medium_2
+B34C1C4F effect_explosion_turretrobot
+B3A6DDD1 Footlocker
+B3C64682 Key
+B3C64683 Key
+B3DF489E muzzleblast_trap_mill_boss
+B3F259D1 NadiaMetalArmorHelmet
+B3FAB681 Land Mine
+B4D2CB84 light_sparks_large
+B4E5E5E5 cw_attis_blade
+B509AC0E chunks_fire_barrel
+B5221D52 explosion_small_smoke
+B525E231 effect_chunks_mutant_attis
+B53D8757 gen_light_orange_xlarge
+B5BCEDFB trap_steam_large
+B5D75AC7 cain_armor_riot_torso
+B5E8D780 chunks_wood_box_large
+B5F8BEE6 BRK_crate_plastic_small_7500
+B5F8BEE7 BRK_crate_plastic_small_7501
+B5FD5288 muzzleblast_hmrocket
+B60A1618 shockwave_medium_green
+B62F9391 blue_fire_large
+B64988FE creature_ghoul_thug_deseagle
+B6511EC1 glow_yellow_line
+B68BA5E0 torchexplode
+B6C915B0 BRK_wood_pallet_broken_5332
+B6C915B1 BRK_wood_pallet_broken_5333
+B6C915B3 BRK_wood_pallet_broken_5331
+B6C915B6 BRK_wood_pallet_broken_5334
+B6C915B7 BRK_wood_pallet_broken_5335
+B6D4B15A creature_ghoul_thug_hmlaserp
+B6E19AAE idle_hvenergy
+B6F85910 Vault Dweller
+B721EF8F spawn_scorpionmound_goo
+B742FE2F creature_ghoul_psycho_hmlaserp
+B76B269D MOV_barrel_waste_2_5326
+B77B1042 body_radiation
+B7871ECF creature_mutant_nightkin_hand
+B7EDFFC8 Laser Pistol
+B7F0B613 CYCLE_40_VOff_II_1N
+B7F0B615 CYCLE_40_VOff_II_1H
+B7FFC105 Tesla Boots
+B800060F Combat Helmet
+B81136E9 CYCLE_40_VOff_II_3N
+B81136EF CYCLE_40_VOff_II_3H
+B824A2F1 muzzle_smoke_smbullet_2
+B8411FE9 charge_mdenergy_large
+B85C2249 pickup_generic_boots
+B86A0EAA Car Trunk
+B86DE8AF Advanced Power Gauntlets
+B89549A5 stress
+B8AEBBDF creature_ghoul_thug_spikedhammer
+B8C4BA32 charge_hvenergy_medium
+B8CCCA8F cleaver_trail
+B8FA053B pickup_quest_carb5_key
+B93A8186 creature_raider_drunk_hand
+B95E446D mutant_bullet_hvyminigun
+B95FAC92 Sub-Machine Gun
+B97693D8 Flamethrower
+B97693D9 Flamethrower
+B9868552 TEST_chunkmeat_infinite
+B99389FA Harold, Ghoul Wanderer
+B99776DA pickup_generic_armor
+B99C7F75 Riot Boots
+B9CC4163 cw_glowradscorpion_claw_L
+B9CC417D cw_glowradscorpion_claw_R
+BA2BB6FC Stimpak
+BA9DDC89 gibchunks_ghoul_vert_spray
+BAA35D62 RangedBackstabber
+BAA5DEE6 Power Armor
+BAB9770A Land Mine
+BAF064A6 effect_cloud_dust_medium
+BB26B496 explosion_totalgib_human
+BB2B2D28 greenfire_vert_small
+BB4077DC smoketrail
+BB5A7681 forcefield_wall
+BB629DF9 CYCLE_Calix_Screen_1080
+BBDC705B muzzleblast_smg
+BBE04BAB effect_torchflame_small
+BC002422 Cloth Shirt and Pants
+BC277969 effect_fire_fuse
+BC795578 GiantRadscorpionAI
+BC799ED0 laser_TEST
+BC80D73C explosion_small_yellow
+BCA34944 Advanced Power Boots
+BCBCFD67 glow_red_idle
+BCC2C175 steam_horiz_large
+BCC37B6B cw_raidertorch_hammer
+BCCE7485 bullet_rocket_meatcan
+BD49E978 Tesla Helmet
+BD996E60 laser_red_trap
+BD9D9503 effect_sparks_falling
+BDF5BE79 Advanced Power Helmet
+BDFCB666 sparks_charging_blue_2
+BE03F087 blackblood_damage_sharp
+BE1F325A glow_white_2
+BE46C5C0 EXP_Barrel_Explosive_5319
+BE8841B3 creature_raider_matron
+BE890007 projtrail_ltenergy_charged
+BEC28A05 explosion_large_plasma
+BEE511D2 Power Armor
+BEF47DD7 explosion_totalgib_robot
+BEF5C1D1 lightning_horiz_large
+BF8E6F13 gen_light_orange_large
+BFA9C12F LIGHT_dim_yellow_xlarge
+BFC85FB5 smokeplume
+BFF4136A effect_greengoo_horiz_medium
+C03E498B MeleeHitAndRun
+C04E8C5F Power Boots
+C0B3F1AF Richard, Wasteland Mayor
+C0D9D7D5 CYCLE_Lever_Screen_8050
+C120649E LIGHT_radiation_meduim
+C13249AD effect_break_largebox
+C162E0A2 WIN_ind_win02a
+C16A682E AMB_cobweb_wall_corner
+C1B961F5 Environment Gauntlets
+C1E1F3AA amb_town_wastesit
+C20DDD9C smoke_grey_medium_line
+C21D65C1 LIGHT_red_strobe_small
+C2783CCC fire_trail_flamethrower_2
+C2783CCD fire_trail_flamethrower_3
+C2786D35 Rhombus, Brotherhood Paladin
+C2A0FE41 Burning Gloves
+C2A0FE5F Burning Gloves
+C2A42E0F Save Game Console
+C2AF2CDB Goo_Large_Wall_7814
+C2F338BE world_light_CRATER_2
+C3276897 muzzle_blast_hvenergy_2
+C329A37B blue_fire_small
+C38C74DC effect_cloud_dirt_verysmall
+C3991E36 fire_window_south
+C39A4D30 greengoo_puddle_small
+C3E80B24 firepit
+C42D2F7A gen_light_dim_yellow_xlarge
+C4A62C2D creature_mutant_grunt_hammer
+C4D55C5A Double Barrel Shotgun
+C4DEC008 effect_explosion_medium_sledge
+C4F4F9D2 Cloth Shirt and Pants
+C4F91F42 gibchunks_deathclawegg
+C521B83F Jesse, Wasteland Trader
+C5545B11 MOV_box_metal_small2_7110
+C555DB7A Collapsed_HOLE_corner
+C55B0F85 cw_normradscorpion_claw_L
+C55B0F9B cw_normradscorpion_claw_R
+C55C469F glow_blue_large
+C5A6676B Spiked Gloves
+C5A66775 Spiked Gloves
+C5E35C59 Sledgehammer
+C5EC63C8 laser_blue_multibeams
+C6205D4B creature_mutant_grunt_hammer2
+C689AF97 muzzle_blast_lgbullet
+C68A6F20 Combat Boots
+C6AAD38D DuBois, Vault Chief Scientist
+C6C4CE1A Door
+C7332CA7 pickup_generic_gloves
+C7446724 Win_19_IntDiner_ICD_1BE
+C7D40F6F cw_mutant_fist_mutantfist_R
+C7D40F71 cw_mutant_fist_mutantfist_L
+C7F0A89A effect_greengas_shortlife
+C8068BC3 effect_fire_small
+C818A7BA Grenade
+C8196C75 effect_break_mediumbox
+C83F5B95 light_sparks_small_blue
+C85B48AA cw_giantradscorpion_tail
+C88EB5EC Stimpak
+C8CF5911 plasma_spray_large
+C8DB249D creature_mutant_blob_eyes
+C8FD50B9 BRK_bookcase_large_broken_7007
+C9078EA1 Win_V_B_Glass
+C916E300 Fists
+C916E31E Fists
+C93EF71C WIN_IntWare_01a
+CA450E8B water_dripping_medium
+CA4D1726 PokeableNoDef
+CA5B6394 creature_mutant_soldier_gatling2
+CA5B6395 creature_mutant_soldier_gatling3
+CA75CD76 Environment Gauntlets
+CA94E7D0 chunks_wood_fence_a
+CA94E7D3 chunks_wood_fence_b
+CAB5BAEF glow_green_2
+CABD7EBC LIGHT_orange_xlarge
+CADB31CA MOV_Cave_rock_medium_2_7526
+CB0DB482 world_light_CRATER_BOSS
+CB429846 cain_armor_power_legs
+CB492398 effect_sparks_horiz_large
+CB6BFEB0 creature_raider_drunk_pistol
+CBB836EB LIGHT_blue_large
+CBC0CF35 water_dripping_large
+CC0D7A28 MOV_Garbage_Can_8030
+CC7B5B91 creature_ambient_wasp
+CCBD4638 MOV_box_metal_medium_7111
+CCD39668 WAREHOUSE_1
+CCD3966A WAREHOUSE_3
+CCD3966B WAREHOUSE_2
+CCD4A0AF effect_water_vert_small
+CCDEC755 greengoo_dripping_medium
+CD04A931 chunks_piss
+CD114AE6 greengoo_splash_large
+CD58BC86 verticle streetlight
+CDA78DE6 creature_ambient_mutantslug
+CDAFDDBE Advanced Power Boots
+CDB02332 smoke_window_fire_north
+CDFAA301 BRK_Bottle01_broke
+CE066F8E LIGHT_red_xlarge
+CE343821 cw_mamadeathclaw_claw_R
+CE34383F cw_mamadeathclaw_claw_L
+CE9BDC03 effect_greengoo_horiz_small
+CEA064AC BRK_stool_wood_7227
+CEB89FB1 effect_explosion_landmine
+CEBDC05B water_splash_medium
+CED9EF8F MeleeBackstabber
+CEE99409 hitworld_hvenergy
+CEEC502A Fan
+CF0A0F08 LIGHT_purple_medium
+CF42DAA7 BRK_bookcase_medium_broken_7004
+CF558E21 flyswarm
+CF5767E7 LIGHT_orange_sunset
+CFAD11C3 muzzle_smoke_lgbullet
+CFDE50BB RangedAdvanced
+CFF7EC45 muzzleblast_hmlaserpistol
+D01EDEAD sparks_charging
+D0394827 greengas_horiz_medium_2
+D03BF151 muzzleblast_firemortar
+D055F928 Key
+D055F929 Key
+D060C0A3 RangedCowardly
+D0A90321 mutant_bullet_turretgun
+D0B49AB4 weapontest
+D0B80C7A skytest
+D0BBBB08 Plasma Grenade
+D0DF96DB cain_armor_combat_torso
+D15CC0E5 BRK_Bottle01
+D1A2E78E LIGHT_purple_large
+D1AC384E Leather Boots
+D1AE85DB hitworld_fire
+D1F8E159 effect_toxicsmoke_green
+D2265506 effect_chunks_ghoul_totalgib
+D258790D BRK_box_wood_small_7100
+D29C72E3 Home-Made Bomb
+D2D19921 Elevator Key
+D3444C02 shockwave_small_green
+D36D622F fire_BGDA
+D39F40FF BRK_wood_pallet_5330
+D3A06DAC fire_wall
+D3A604A8 Metal Boots
+D3A85043 effect_steam_vert_small
+D3B0F757 smoke_fire_wall_hit
+D3B45626 Computer
+D3DAABB8 effect_torchflame_small_2
+D4041FD8 Cloth Boots
+D4168034 Environment Armor
+D455CDBA effect_chunks_human_totalgib
+D4708AA7 Nuclear Device
+D47164E7 Combat Gauntlets
+D47ACC73 effect_water_splash_medium
+D4836651 creature_roach_spawn
+D49F1576 test_sentry_gun
+D50BE353 BlobTentacleOneBASE
+D50CC1A6 smoke_flame_creature_hit
+D53019B5 dirt_cloud_large
+D56B41C4 wpn_rocket_special_meatcan
+D5A15538 CYCLE_Sci_fi_Television_1_7575
+D5A82A4A corpse_human_chunk_emitter
+D5AB7DAB Rhombus_Chain_Empty_5819
+D605EC07 Psycho
+D620DFB1 laser_blue_lightning
+D62B85B8 glow_test
+D63CBEB0 greengoo_trail_scorpionspit
+D65E7BFC trap_greengoo_medium
+D694B00C Combat Boots
+D698381A falling_rocks_large
+D7127622 projtrail_blood
+D7186ED5 RESIDENCE_1
+D7186ED6 RESIDENCE_2
+D7186ED7 RESIDENCE_3
+D72B2AF6 Metal Helmet
+D73152B3 lightning_trap_medium
+D738A7F8 effect_glow_blue_small
+D76E252F lightning_arc_large
+D77E40F4 gen_light_red_strobe_small
+D7A204E3 effect_smoke_window
+D7BEB295 creature_raider_torch_gatling
+D7D12CBF Incendiary Mortar
+D82C067C muzzleblast_hmpistol
+D87AD8DA trap_lightning_medium
+D8A99A8E landmine_fraggrenade
+D8AC038A effect_cloud_dirt_large
+D90A18D7 creature_mutant_blob_boss_Tentacle
+D9232BB4 Clothes
+D94AC914 Collapsed_HOLE_niche
+D97EF9EC steam_horiz_small
+D99C495D explosion_totalgib_ghoul
+DA1745BF trap_laser_trigger
+DA26AA05 BAR
+DA33C406 gibchunks_ghoul_heavy
+DA396996 Tesla Helmet
+DA3C0C40 bld_win01
+DA3C0C42 bld_win03
+DA3C0C43 bld_win02
+DA3C0C44 bld_win05
+DA3C0C45 bld_win04
+DA3C0C46 bld_win07
+DA3C0C47 bld_win06
+DA5B7C22 effect_dripping_greengoo
+DAC94758 gen_light_red_large
+DAD59099 effect_mist_white
+DAE4EA33 Light Energy
+DAF81464 effect_laser_red_small
+DB03D7A8 Win_19_IntDiner_ICD_1BE_c
+DB03D7A9 Win_19_IntDiner_ICD_1BE_b
+DB1E4CFF muzzleblast_hmpiperifle
+DBDBB58B cw_giantradscorpion_claw_R
+DBDBB595 cw_giantradscorpion_claw_L
+DBEB7FE4 lightning_horiz_small
+DBF9B9F0 cleaver_distort_trail
+DBFFF3BE muzzle_blast_hvenergy
+DC4297C5 RUINS_BOSS
+DC4AD09C MOV_rock_medium_7526
+DC4AD09D MOV_rock_medium_7527
+DC4AD09F MOV_rock_medium_7525
+DC649FD7 steam_vert_small_blue
+DC6DB5EC Bulkhead Door
+DC707A1A MOV_box_metal_medium2_7111
+DCB70126 t_lee
+DCBE67E6 smallbullet_instakill
+DD037D47 Continuous Fire Laser
+DD9063C9 effect_water_horiz_medium
+DDB34113 sparks_horiz_medium_blue
+DDD83F78 creature_roach_mutant_spawn
+DE09C77B cain_armor_leather_legs
+DE185AE5 Car Trunk
+DE5A408E Cyrus
+DE8C85F2 proto
+DEA4ECB2 fire_large_wall
+DEECB34A laser_red_ball
+DF18E460 smoke_grey_window
+DF2E49B9 Cloth Gloves
+DF5AD130 LIGHT_white_xlarge_2
+DF5BFB9C Wasteland Man
+DF6D45FA Win_19_IntDiner_IW_2B
+DF9DC854 Flamethrower
+DF9DC855 Flamethrower
+DF9DC856 Flamethrower
+DFB54A80 charge_ltenergy_line_2
+DFD34D09 radiation
+DFD91D63 trigger_laser_blue
+DFE6B907 chunks_wood_table_round
+DFFE65C5 VTWAREHOUSE_BOSS
+E00C53D4 BRIDGE_2
+E00C53D7 BRIDGE_1
+E02180A3 effect_explosion_small
+E02AE2F0 sniperbullet
+E03F110A CYCLE_Overseers_Pedestal_Lights_7709
+E072227D effect_chunks_ghoul_heavy
+E0BEE8C7 effect_lightning_medium
+E0C023BE torchflame_small_2
+E0CA42FF hitworld_ltenergy_2
+E0F50943 AMB_vault_man_spectator
+E11889CD MOV_Cave_rock_small_4_7524
+E12BBD53 Tesla Armor
+E1A863B8 Cabinet
+E1AFABBB GiantRadscorpionTailCloud
+E1D5FE54 t_evi
+E1EC753A water_dripping_small
+E21D2E8F Kamikaze
+E2398326 effect_fire_window_west
+E251554B test_lightning_2
+E2554444 Riot Armor
+E316D761 Spiked Baseball Bat
+E3592884 gen_light_white_large
+E35EDE35 TUTORIAL
+E43EB29C cleaveremitter_2
+E44F32FB muzzleblast_turboplasma
+E45850A0 effect_fire_small_blue
+E4D887A6 cain_armor_leather_torso
+E4F44DBC gibchunks_human_light
+E52A4ECB effect_cloud_dust_ambient
+E566E5B1 CYCLE_40_VOff_IC_1H
+E566E5B7 CYCLE_40_VOff_IC_1N
+E56EB976 sparks
+E573BBFF creature_raider_lieutnt_dualpistol
+E59D7636 creature_mutant_blob_archway
+E5B88CA4 bullet_pistol_smg
+E5EAE783 trap_mill_boss_lightning
+E62E3E48 effect_fire_large
+E6364BF0 effect_explosion_medium
+E63B8697 glow_red_medium
+E6B39A00 Residential Door
+E6C4CA4D BRK_desk_large_wood_damaged_7057
+E6DB805E creature_deathclaw_baby
+E71E69C6 smoke_window_north
+E73D5435 effect_steam_horiz_large_2
+E74505CE lightning_plasma
+E751B886 lightning_trap_instakill
+E7570952 effect_sparks
+E75FE58A charge_ltenergy_line
+E79F17EC bullet_pistol_beretta
+E7B1A054 lightning_arc_small
+E7BFD0E9 Tesla Boots
+E7D11C3B hitworld_hvenergy_2
+E7D84B04 muzzle_blast_ltenergy
+E80CCF41 fire_wall_2
+E824DFBA effect_piss_mutant
+E82FE830 gen_light_green_small
+E8440BAE blob_wall_eyes
+E85E4A1D glow_blue_small
+E87E9609 CARB_1a
+E87E960A CARB_1b
+E886D956 LIGHT_white_medium
+E8C7666A hitworld_smbullet
+E8D6BFAB Riot Helmet
+E92E195F effect_glow_blue
+E96F0995 AMB_vault_woman_spectator
+E99CF01F idle_sparks_blue
+E9BDC031 Shirt and Pants
+E9BF239B Metal Gauntlets
+EA1601EE blob_wall_eyes_corner
+EA3DCE06 effect_fire_wall_hit
+EA46FF37 gen_light_orange_medium
+EA72541D MOV_box_metal_small_7110
+EAE258B2 glow_yellow_large
+EB676B65 effect_trap_force_field
+EB6AFD1D effect_spawn_roachdig
+EBB04D66 Control Pedestal
+EBB435D1 effect_greengas_horiz_large
+EC10E9EC effect_dripping_greengoo_small
+EC30C8A0 light_lightning_small
+EC352660 Spiked Gloves
+EC35267E Spiked Gloves
+EC37D370 t_pas
+EC40EE34 creature_robot_tesla
+EC45CE5E Office Door
+EC641212 body_lightning
+ECAA9530 Power Boots
+ECBB6E6B cw_mutant_powersaw
+ECD26B10 greengoo_vert_large
+ED14CA7E LIGHT_orange_medium
+ED17C127 effect_chunks_mutant_totalgib
+ED206064 Warehouse Key
+ED2B35CE steam_vert_small
+ED73E086 Desert Eagle
+ED841A15 player_robot_turret
+ED8C4B1F Plastique
+EDDF7323 Win_19_IntDiner_IC_1B
+EE1CF7F0 cain_armor_metal_legs
+EE362B27 fire_small
+EE3D42CE Tesla Helmet
+EE78AE12 charge_plasmacannon
+EE81307B explosion_large_toxic
+EE871EB0 Elevator Keycard
+EEA89BDC explosion_medium_yellow
+EEB4E3CB creature_mutant_grunt_fist2
+EF4374F2 effect_lightning_TEST
+EF5BD0B2 CARB_2
+EF5BD0B3 CARB_3
+EF5BD0B4 CARB_4
+EF5BD0B5 CARB_5
+EF5BD0B6 CARB_6
+EF6AE42C effect_mist_green
+EF98C150 Attis, Mutant General
+EF9A41F0 AMB_cobweb_corner_high
+EFD5C924 effect_explosion_staticgrenade
+F00D9346 effect_fire_window_north
+F01900FF creature_mutant_soldier_rocket
+F0191936 heatemitter
+F051DBAE Heavy Machine Gun
+F0681ED0 LAB_BOSSb
+F0681ED3 LAB_BOSSa
+F0F9DFCD glow_red_small
+F116B5AC INSTAKILL Hammer
+F11CB931 chunks_spawn_roach
+F135CBAA cw_gatling_flame_flamethrow2
+F18B3F4A muzzleblast_plasmacannon
+F1C08F0E amb_town_wastedangle
+F1CFFC7A explosion_heat_distortion
+F1E68DD3 Environment Helmet
+F23F8DFB trap_lightning_large
+F23FC72A amb_trashpaper
+F2617261 effect_explosion_hmrocket
+F27DF913 fireballlight
+F2B715D3 explosion_large_longsmoke
+F2BADA43 COL_small
+F2DAF3C1 Plasma Grenade
+F2E8AE0C breakwalltest
+F2EC45D4 cw_pistol2_mel_raidergun
+F3215054 bullet_rifle_hmlaserrifle
+F37F03EA blackblood_damage_blunt
+F390FCBA greengoo_puddle_medium
+F3AD9E16 AMB_cobweb_corner_low
+F3C19EA4 sparks_horiz_medium
+F3C3F3E7 cw_raider_fist_R
+F3C3F3F9 cw_raider_fist_L
+F3FC96E0 Radscorpion_Corpse_1815
+F4222E69 gen_light_white_xlarge
+F47556C8 flagcloth
+F486F3B9 Environment Armor
+F48F2DCE creature_ghoul_psycho_ripper
+F4B95DE2 gen_light_yellow_xlarge
+F5507030 muzzle_blast_ltenergy_4
+F5507031 muzzle_blast_ltenergy_5
+F5507036 muzzle_blast_ltenergy_2
+F5507037 muzzle_blast_ltenergy_3
+F5605EC3 LIGHT_red_large
+F5BF3021 CYCLE_40_VOff_II_1JN_Mir
+F5C3C85B Vidya, Wasteland Doctor
+F5D14B7B gibchunks_mutant_totalgib
+F608BF04 Pipes_Straight_Damaged_6079
+F633E847 AMB_cobweb_wall_low
+F67CD767 greenfire_vert_large
+F690FFE5 hitworld_scorpionspit
+F6A3C9B1 greenfire_vert_medium
+F6A61997 effect_greengas_vert_small
+F6CB8A34 Home-Made Pistol
+F7507D0F Death_Claw_Egg_Spawner
+F75444F0 Crane Key
+F7A8168A cain_armor_riot_arms
+F7D347DF LIGHT_green_xlarge
+F7D4B7F5 effect_rain_light
+F80A8710 effect_greengoo_splash_small
+F80F436A effect_footstep_water
+F8367490 CYCLE_VLab_pieces_172
+F84DE5EC creature_robot_patrol_tutorial
+F8772645 Locker
+F87F1BEC explosion_medium_flash
+F88B99C9 smoke_wall
+F8A0A313 MOV_Cave_rock_small_2_7522
+F8AB7781 light_lightning_large
+F8BC7ACC Ruby's Necklace
+F908BE21 Turbo Super Sledge
+F92E5C9D MOV_Barrel_waste_Damaged_5339
+F98DE847 greengoo_splash_small
+F99F37C6 Box_Cluster_Metal_Monster_7122
+F9A8A325 WIN_grg_win04b
+FA0F698F smoke_yellow_white
+FA3E4512 gen_light_green_medium
+FAAFA14B effect_plasma_spray_small
+FAEE97A9 Leather Helmet
+FB020DCF effect_lightning_large
+FB2C7D9D Riot Helmet
+FB4F5F28 fire_torch
+FB7C2C92 creature_robot_patrol
+FB8335BE chunks_wood_smalldesk
+FBA21BCA creature_raider_drunk_knife
+FC34A4CD greengoo_puddle_large
+FC3DCE8D body_energy
+FC3F5CC3 cfade
+FC4EEAE2 explosion_small_plasma
+FC52CB78 Mini-Nuke
+FC6BF609 PIT
+FC74CDBE sparks_vert_large
+FC9A69C2 WIN_IntMill01a
+FCB6188F bullet_gatling_flamethrower_danny1
+FCE63473 effect_radiation
+FCEFFD06 MOV_Cave_rock_large_1_7528
+FD13B237 LIGHT_blue_medium
+FD2569D3 greengas_vert_small
+FD762D68 muzzleblast_flamethrower
+FD86815A Incendiary Grenade
+FD92B627 GrenadeThrow
+FD9A2FBE Vault Switch
+FDBCA745 Advanced Power Gauntlets
+FDCF29AB cw_wastelanddog_paw_R
+FDCF29B5 cw_wastelanddog_paw_L
+FDD4B0E2 cw_mutant_fist_gauntlet_R
+FDD4B0FC cw_mutant_fist_gauntlet_L
+FE55293B Metal Gate
+FE721458 gen_light_orange_sunset
+FE80FCD4 shockwave_large_blue
+FE901E81 muzzle_blast_smbullet
+FEA8CA6B apple
+FED155BE explosion_totalgib_insect
+FED3ACC6 creature_raider_soldier_knife
+FEFE3FE0 fireemitter
+FF12C830 creature_ghoul_psycho_comshotgun
+FF18FDEC fire_window
+FF2D34D8 Computer Bank
+FF2FBEA1 effect_steam_horiz_medium_2
+FF3351B4 MOV_rock_large_7528
+FF3351B5 MOV_rock_large_7529
+FFA183CD bartest
+FFDADFA4 EXP_land_mine

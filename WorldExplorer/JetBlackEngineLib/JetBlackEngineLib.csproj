@@ -13,6 +13,7 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="Data/DataContainers/bos_name_table.txt" />
+		<EmbeddedResource Include="Data/DataContainers/bos_entity_names.txt" />
 	</ItemGroup>
 
 	<ItemGroup>

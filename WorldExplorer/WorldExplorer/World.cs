@@ -265,71 +265,77 @@ public class World
     }
 
     /// <summary>
-    /// Two-pass SDB load: first the non-GTEXT files (internal IDs from
-    /// GLOBAL.SDB and per-level SDBs), then GTEXT.* (translated display
-    /// names). 63 hashes intentionally appear in both namespaces — same
-    /// level/character has both an internal ID like "LAB_1b" and a player-
-    /// facing name like "Vault Lab 1, mutated". When both exist for the
-    /// same hash we combine them as "INTERNAL — Display" so the explorer
-    /// surfaces both. Internal-only or display-only entries pass through
-    /// unmodified.
+    /// Three-bucket SDB load:
+    ///   - GTEXT*  → translated player-facing display names (e.g. "Vault Lab 1").
+    ///   - deftexte (Xbox-only) → programmer-style identifiers like
+    ///     "creature_robot_sentry". Surfaced even when a prettier name exists
+    ///     because the dev identifier disambiguates entities that share a
+    ///     friendly name (e.g. multiple "Mutant Soldier" variants).
+    ///   - everything else (GLOBAL.SDB + per-level SDBs) → "pretty" internal
+    ///     names like "Mutant Grunt", "Prison Key", "LAB_1b".
+    ///
+    /// Combine all three with " — " separators, in order pretty → deftexte
+    /// → display, skipping any that's missing or duplicates an earlier slot.
+    /// Bundled embedded fallback (<see cref="BosEntityNameTable"/>) seeds the
+    /// deftexte bucket so PS2 users — whose SDB set never shipped deftexte —
+    /// still see those names. Xbox users with an actual deftexte.sdb on disk
+    /// hit the same hashes; duplicates are no-ops via TryAdd.
     /// </summary>
     private static Dictionary<uint, string> LoadAllSdbNames(IEnumerable<string> dirs)
     {
-        var sdbList = new List<string>();
+        var pretty = new Dictionary<uint, string>();
+        var devnames = new Dictionary<uint, string>();
+        var display = new Dictionary<uint, string>();
+
         foreach (var d in dirs)
         {
             foreach (var sdbPath in Directory.EnumerateFiles(d, "*.SDB", SearchOption.TopDirectoryOnly))
             {
-                sdbList.Add(sdbPath);
-            }
-        }
-        // Order: non-GTEXT first (internal IDs), then GTEXT (display names).
-        sdbList.Sort((a, b) =>
-        {
-            var ag = Path.GetFileName(a).StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
-            var bg = Path.GetFileName(b).StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
-            return ag.CompareTo(bg);
-        });
-
-        var internalNames = new Dictionary<uint, string>();
-        var displayNames = new Dictionary<uint, string>();
-        foreach (var sdbPath in sdbList)
-        {
-            var isGtext = Path.GetFileName(sdbPath).StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
-            try
-            {
-                var sdb = SdbFile.Read(sdbPath);
-                sdb.ReadDirectory();
-                foreach (var rec in sdb.Records)
+                var fileName = Path.GetFileName(sdbPath);
+                var isGtext = fileName.StartsWith("GTEXT", StringComparison.OrdinalIgnoreCase);
+                var isDeftexte = fileName.StartsWith("deftexte", StringComparison.OrdinalIgnoreCase);
+                var bucket = isGtext ? display : isDeftexte ? devnames : pretty;
+                try
                 {
-                    if (rec.Text == null) continue;
-                    var bucket = isGtext ? displayNames : internalNames;
-                    bucket.TryAdd(rec.Hash, rec.Text);
+                    var sdb = SdbFile.Read(sdbPath);
+                    sdb.ReadDirectory();
+                    foreach (var rec in sdb.Records)
+                    {
+                        if (rec.Text == null) continue;
+                        bucket.TryAdd(rec.Hash, rec.Text);
+                    }
                 }
+                catch { }
             }
-            catch { }
         }
 
-        // Merge: prefer internal as the primary name, append display in
-        // parens when distinct. Display-only entries (no internal match)
-        // come through with just the display name.
-        var combined = new Dictionary<uint, string>();
-        foreach (var (h, intern) in internalNames)
+        // Seed the deftexte bucket with the embedded Xbox snapshot.
+        // TryAdd skips entries an on-disk SDB already filled in.
+        foreach (var (h, name) in BosEntityNameTable.All)
         {
-            if (displayNames.TryGetValue(h, out var disp) &&
-                !string.Equals(intern, disp, StringComparison.OrdinalIgnoreCase))
-            {
-                combined[h] = $"{intern} — {disp}";
-            }
-            else
-            {
-                combined[h] = intern;
-            }
+            devnames.TryAdd(h, name);
         }
-        foreach (var (h, disp) in displayNames)
+
+        var combined = new Dictionary<uint, string>();
+        var allHashes = new HashSet<uint>(pretty.Keys);
+        allHashes.UnionWith(devnames.Keys);
+        allHashes.UnionWith(display.Keys);
+        foreach (var h in allHashes)
         {
-            combined.TryAdd(h, disp);
+            var parts = new List<string>();
+            void Add(string? s)
+            {
+                if (string.IsNullOrEmpty(s)) return;
+                foreach (var existing in parts)
+                {
+                    if (string.Equals(existing, s, StringComparison.OrdinalIgnoreCase)) return;
+                }
+                parts.Add(s);
+            }
+            Add(pretty.GetValueOrDefault(h));
+            Add(devnames.GetValueOrDefault(h));
+            Add(display.GetValueOrDefault(h));
+            if (parts.Count > 0) combined[h] = string.Join(" — ", parts);
         }
         return combined;
     }
