@@ -68,7 +68,7 @@ public class BdgaAnmDecoder : AnmDecoder
         var curAngVelFrame = new int[numBones];
         var curVelFrame = new int[numBones];
 
-        var numFrames = 1;
+        var numFrames = offset4Val;
 
         var frameNumber = 0;
         var otherOff = offset8Val + numBones * 0x0e;
@@ -76,13 +76,11 @@ public class BdgaAnmDecoder : AnmDecoder
         pose = null;
         while (otherOff < endIndex)
         {
-            int count = data[otherOff++];
+            int count = data[otherOff];
+            if (frameNumber + count >= numFrames) break;
+            otherOff++;
             var byte2 = data[otherOff++];
             var boneNum = byte2 & 0x3f;
-            if (boneNum == 0x3f)
-            {
-                break;
-            }
 
             frameNumber += count;
 
@@ -176,8 +174,6 @@ public class BdgaAnmDecoder : AnmDecoder
         {
             meshPoses.Add(pose);
         }
-
-        numFrames = frameNumber + 1;
 
         var animData = new AnimData(bindingPose, numBones, numFrames, offset4Val, offset14Val, offset18Val,
             skeletonDef, meshPoses);
