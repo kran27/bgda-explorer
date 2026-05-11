@@ -93,19 +93,35 @@ public class BdgaAnmDecoder : AnmDecoder
                     meshPoses.Add(pose);
                 }
 
+                // A new keyframe must store the integrated pose at frameNumber
+                // for BOTH channels, even if this record only updates one of
+                // them. BuildPerFramePoses extrapolates forward from each
+                // keyframe using its stored velocity, so a stale rotation or
+                // position on a keyframe shows up as a one-frame snap.
+                var angDt = (frameNumber - curAngVelFrame[boneNum]) / 131072.0;
+                var posDt = (frameNumber - curVelFrame[boneNum]) / 512.0;
+                var av = curPose[boneNum].AngularVelocity;
+                var v = curPose[boneNum].Velocity;
                 pose = new AnimMeshPose
                 {
                     FrameNum = frameNumber,
                     BoneNum = boneNum,
-                    Position = curPose[boneNum].Position,
-                    Rotation = curPose[boneNum].Rotation,
-                    AngularVelocity = curPose[boneNum].AngularVelocity,
-                    Velocity = curPose[boneNum].Velocity
+                    Position = new Point3D(
+                        curPose[boneNum].Position.X + v.X * posDt,
+                        curPose[boneNum].Position.Y + v.Y * posDt,
+                        curPose[boneNum].Position.Z + v.Z * posDt),
+                    Rotation = new Quaternion(
+                        curPose[boneNum].Rotation.X + av.X * angDt,
+                        curPose[boneNum].Rotation.Y + av.Y * angDt,
+                        curPose[boneNum].Rotation.Z + av.Z * angDt,
+                        curPose[boneNum].Rotation.W + av.W * angDt),
+                    AngularVelocity = av,
+                    Velocity = v
                 };
             }
 
-            // bit 7 specifies whether to read 4 (set) or 3 elements following
-            // bit 6 specifies whether they are shorts or bytes (set).
+            // bit 7 specifies an angular-velocity (set) vs linear-velocity
+            // record; bit 6 specifies byte (set) vs short element width.
             if ((byte2 & 0x80) == 0x80)
             {
                 int a, b, c, d;
@@ -126,20 +142,9 @@ public class BdgaAnmDecoder : AnmDecoder
                 }
 
                 Quaternion angVel = new(b, c, d, a);
-
-                var prevAngVel = pose.AngularVelocity;
-                var coeff = (frameNumber - curAngVelFrame[boneNum]) / 131072.0;
-                Quaternion angDelta = new(prevAngVel.X * coeff, prevAngVel.Y * coeff,
-                    prevAngVel.Z * coeff,
-                    prevAngVel.W * coeff);
-                pose.Rotation = new Quaternion(pose.Rotation.X + angDelta.X, pose.Rotation.Y + angDelta.Y,
-                    pose.Rotation.Z + angDelta.Z, pose.Rotation.W + angDelta.W);
-
-                pose.FrameNum = frameNumber;
                 pose.AngularVelocity = angVel;
-
                 curPose[boneNum].Rotation = pose.Rotation;
-                curPose[boneNum].AngularVelocity = pose.AngularVelocity;
+                curPose[boneNum].AngularVelocity = angVel;
                 curAngVelFrame[boneNum] = frameNumber;
             }
             else
@@ -160,16 +165,9 @@ public class BdgaAnmDecoder : AnmDecoder
                 }
 
                 Point3D vel = new(x, y, z);
-                var prevVel = pose.Velocity;
-                var coeff = (frameNumber - curVelFrame[boneNum]) / 512.0;
-                Point3D posDelta = new(prevVel.X * coeff, prevVel.Y * coeff, prevVel.Z * coeff);
-                pose.Position = new Point3D(pose.Position.X + posDelta.X, pose.Position.Y + posDelta.Y,
-                    pose.Position.Z + posDelta.Z);
-                pose.FrameNum = frameNumber;
                 pose.Velocity = vel;
-
                 curPose[boneNum].Position = pose.Position;
-                curPose[boneNum].Velocity = pose.Velocity;
+                curPose[boneNum].Velocity = vel;
                 curVelFrame[boneNum] = frameNumber;
             }
         }
