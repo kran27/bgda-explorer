@@ -347,7 +347,8 @@ public class VifDecoder
         }
 
         var textureCoordinates = new PointCollection(uvCoords);
-        return new Mesh(normals, positions, textureCoordinates, triangleIndices, vertexWeights);
+        return new Mesh(normals, positions, textureCoordinates, triangleIndices, vertexWeights)
+            { WindingDuplicated = true };
     }
 
     public static List<Chunk> ReadVerts(ILogger log, ReadOnlySpan<byte> vertData)

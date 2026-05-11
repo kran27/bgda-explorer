@@ -10,7 +10,7 @@ using System.IO;
 using System.Numerics;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using VERTEX = SharpGLTF.Geometry.VertexBuilder<SharpGLTF.Geometry.VertexTypes.VertexPosition,
+using VERTEX = SharpGLTF.Geometry.VertexBuilder<SharpGLTF.Geometry.VertexTypes.VertexPositionNormal,
     SharpGLTF.Geometry.VertexTypes.VertexTexture1, SharpGLTF.Geometry.VertexTypes.VertexJoints4>;
 
 namespace WorldExplorer.DataExporters;
@@ -31,7 +31,7 @@ public class VifGltfExporter : IVifExporter
 
         var bakePose = frame >= 0 && pose != null;
 
-        MeshBuilder<VertexPosition, VertexTexture1, VertexJoints4> meshB = new("mesh");
+        MeshBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> meshB = new("mesh");
 
         for (var partIdx = 0; partIdx < parts.Count; partIdx++)
         {
@@ -141,10 +141,13 @@ public class VifGltfExporter : IVifExporter
         var vwNum = 0;
         var vw = hasVertexWeights ? mesh.VertexWeights[vwNum] : new VertexWeight();
 
+        var hasNormals = mesh.Normals.Count == mesh.Positions.Count;
+
         for (var i = 0; i < mesh.Positions.Count; i++)
         {
             var pos = mesh.Positions[i];
             var uv = mesh.TextureCoordinates[i];
+            var normal = hasNormals ? mesh.Normals[i] : new Vector3D(0, 0, 1);
 
             if (hasVertexWeights && vw.endVertex < i)
             {
@@ -171,6 +174,10 @@ public class VifGltfExporter : IVifExporter
                     m.Rotate(bone1Pose.Rotation);
                     m.Translate(new Vector3D(bone1Pose.Position.X, bone1Pose.Position.Y, bone1Pose.Position.Z));
                     point = m.Transform(point);
+
+                    var rot = Matrix3D.Identity;
+                    rot.Rotate(bone1Pose.Rotation);
+                    normal = rot.Transform(normal);
                 }
                 else
                 {
@@ -197,11 +204,25 @@ public class VifGltfExporter : IVifExporter
                     point = new Point3D((point1.X * bone1Coeff) + (point2.X * bone2Coeff),
                         (point1.Y * bone1Coeff) + (point2.Y * bone2Coeff),
                         (point1.Z * bone1Coeff) + (point2.Z * bone2Coeff));
+
+                    // Normals: rotation only (no translation), weight-blend
+                    // the two rotated vectors and renormalize.
+                    var r1 = Matrix3D.Identity; r1.Rotate(bone1Pose.Rotation);
+                    var r2 = Matrix3D.Identity; r2.Rotate(bone2Pose.Rotation);
+                    var n1 = r1.Transform(normal);
+                    var n2 = r2.Transform(normal);
+                    normal = new Vector3D(
+                        (n1.X * bone1Coeff) + (n2.X * bone2Coeff),
+                        (n1.Y * bone1Coeff) + (n2.Y * bone2Coeff),
+                        (n1.Z * bone1Coeff) + (n2.Z * bone2Coeff));
                 }
             }
 
-            VertexPosition pos1 = new((float)(point.X / scale), (float)(point.Y / scale),
-                (float)(point.Z / scale));
+            if (normal.LengthSquared > 0) normal.Normalize();
+
+            VertexPositionNormal pos1 = new(
+                new Vector3((float)(point.X / scale), (float)(point.Y / scale), (float)(point.Z / scale)),
+                new Vector3((float)normal.X, (float)normal.Y, (float)normal.Z));
             VertexTexture1 tex1 = new(new Vector2((float)uv.X, (float)uv.Y));
             List<(int JointIndex, float Weight)> weight = new();
 
@@ -233,7 +254,11 @@ public class VifGltfExporter : IVifExporter
             verts[i] = new VERTEX(pos1, tex1, weight.ToArray());
         }
 
-        for (var i = 0; i < mesh.TriangleIndices.Count - 3; i += 6)
+        // PS2 meshes carry each triangle twice (forward + reverse winding)
+        // as a double-sided hack — stride past the duplicate. Xbox meshes
+        // emit each triangle once.
+        var stride = mesh.WindingDuplicated ? 6 : 3;
+        for (var i = 0; i + 2 < mesh.TriangleIndices.Count; i += stride)
         {
             prim.AddTriangle(verts[mesh.TriangleIndices[i]], verts[mesh.TriangleIndices[i + 1]],
                 verts[mesh.TriangleIndices[i + 2]]);

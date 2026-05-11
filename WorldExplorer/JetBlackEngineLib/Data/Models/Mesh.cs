@@ -12,6 +12,14 @@ public class Mesh
     public readonly IList<int> TriangleIndices;
     public readonly IList<VertexWeight> VertexWeights;
 
+    /// <summary>
+    /// True when <see cref="TriangleIndices"/> contains each triangle twice
+    /// (forward then reversed winding) — the PS2 VifDecoder's double-sided
+    /// hack. False for one-winding-per-triangle decoders like Xbox. The GLTF
+    /// exporter uses this to decide whether to stride past the duplicate.
+    /// </summary>
+    public bool WindingDuplicated;
+
     public Mesh(IList<Vector3D> normals, IList<Point3D> positions, IList<Point> textureCoordinates,
         IList<int> triangleIndices, IList<VertexWeight> vertexWeights)
     {
