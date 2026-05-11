@@ -7,45 +7,38 @@ namespace JetBlackEngineLib.Data.Models;
 /// <summary>
 /// Decodes Xbox-platform BoS mesh entries.
 ///
-/// Header layout (verified empirically):
-///   +0x10  byte  = submesh count
-///   +0x12  byte  = LOD count
-///   +0x13  byte  = 0xFF sentinel
-///   +0x14  u32   = zero pad
-///   +0x18  u32   = data-section offset. The u32 at that offset holds the
-///                  vertex-stream byte size; vertices follow immediately after.
-///   +0x1C  u32   = index-buffer start offset. u16 indices live in
-///                  [+0x1C, +0x18); count = (+0x18 - +0x1C) / 2.
-///   +0x20  u32   = vertex count.
+/// Header:
+///   +0x10  byte  flags (bit 0x20 = stride 38; other bits = blend modes)
+///   +0x12  byte  primary-batch strip count (drives the palette split)
+///   +0x13  byte  0xFF sentinel
+///   +0x14  u32   zero pad
+///   +0x18  u32   data-section offset; u32 there is vertex-stream byte size,
+///                vertices follow immediately
+///   +0x1C  u32   index-buffer start offset
+///   +0x20  u32   vertex count
+///   +0x24  byte[64]  primary bone palette (slot → skeleton bone, 0xFF = unused)
+///   +0x64  byte[64]  secondary bone palette (overlays primary)
+///   +0xAC  u32[]     cumulative index-buffer offsets per strip
 ///
-/// Topology: single triangle strip with **degenerate-triangle restart bridges**
-/// (a == b or b == c marks a discardable triangle that bridges two sub-strips).
-/// Standard old-school PS2/Xbox technique.
+/// Topology: triangle strip with degenerate-triangle restart bridges
+/// (a == b or b == c marks a discardable bridge).
 ///
-/// Vertex stream (stride varies — 32 bytes for the common non-skinned format,
-/// 38 bytes for at least one skinned variant; derived from file size since
-/// the only fields we use sit at fixed offsets in the first 16 bytes):
-///   +0..5    int16[3]  position           (divided by 16, mirroring the PS2 convention)
-///   +6..11   int16[3]  normal             (normalized by 32767)
-///   +12..15  int16[2]  texcoord (s, t)    (encoded as pixel * scale, where
-///                                          scale = largest pow2 with
-///                                          dim*scale ≤ 32768. So u_norm =
-///                                          u_raw / (width * uScale).)
-///   +16..end ?         varies — for the 32-byte form, includes a per-vertex
-///                       float and a constant 1.0 bone-weight slot. For 38-byte
-///                       skinned vertices, presumably contains bone indices /
-///                       weights. Not interpreted here.
-///
-/// The vertex-shader register convention (from disassembling world.xvu / skin.xvu):
-///   v0 = position, v2 = normal, v9 = texcoord. v1 carries skinning data when present.
+/// Vertex stream (stride 16/32/38):
+///   +0..5   int16[3]  position (/16)
+///   +6..11  int16[3]  normal (/32767)
+///   +12..15 int16[2]  texcoord (pixel * pow2 scale, see UvDivisor)
+///   +16..19 float     palette_slot1 * 4  (v1.x; ARL A0., v1.x → c[A0+10..A0+13])
+///   +20..23 float     bone1 weight
+///   +24..27 float     palette_slot2 * 4
+///   +28..31 float     bone2 weight (0 when single-bone)
+///   +32..37 int16[3]  (38-byte only) tangent — ignored
 /// </summary>
 public static class XboxMeshDecoder
 {
     public static bool LooksLikeXboxMesh(ReadOnlySpan<byte> data)
     {
         if (data.Length < 0x40) return false;
-        // Discriminators against PS2 VIF: 0xFF sentinel at +0x13, zero pad at
-        // +0x14..+0x17, in-file data offset at +0x18, sane vertex count at +0x20.
+        // Discriminators against PS2 VIF.
         if (data[0x13] != 0xFF) return false;
         if (DataUtil.GetLeInt(data, 0x14) != 0) return false;
         var dataOff = DataUtil.GetLeInt(data, 0x18);
@@ -59,24 +52,16 @@ public static class XboxMeshDecoder
 
     /// <summary>
     /// Decode a BoS-Xbox world-file mesh referenced via a 16-byte indirection
-    /// table. Returns null if the table doesn't validate.
+    /// table at <paramref name="tableOffset"/> with fields (vertexPtr,
+    /// vertexCount, indexPtr, indexCount). Returns null if the table doesn't
+    /// validate.
     /// </summary>
-    /// <param name="fileData">Full world-file bytes — pointers in the table are
-    /// absolute offsets into this span.</param>
-    /// <param name="tableOffset">VifDataOffset from the world element; the
-    /// 16-byte mesh table sits here as
-    /// (vertexPtr, vertexCount, indexPtr, indexByteCount).</param>
     public static Mesh? DecodeWorldMesh(ReadOnlySpan<byte> fileData, int tableOffset, int texturePixelWidth, int texturePixelHeight)
     {
         if (tableOffset < 0 || tableOffset + 16 > fileData.Length) return null;
         var vertexPtr = DataUtil.GetLeInt(fileData, tableOffset + 0);
         var vertexCount = DataUtil.GetLeInt(fileData, tableOffset + 4);
         var indexPtr = DataUtil.GetLeInt(fileData, tableOffset + 8);
-        // The +0x0C field is INDEX COUNT, not byte count. Verified against
-        // the engine binary: world.xvu render path passes this value directly
-        // to NV097_DRAW_INDEXED inline (sub_A9870 in default.xbe), and it
-        // matches the index-count interpretation perfectly — indices fill
-        // the region [iptr, iptr + 2*indexCount) which ends exactly at vptr.
         var indexCount = DataUtil.GetLeInt(fileData, tableOffset + 12);
 
         if (vertexCount <= 0 || vertexCount > 0x100000) return null;
@@ -84,8 +69,7 @@ public static class XboxMeshDecoder
         if (indexCount <= 0) return null;
         if (indexPtr < 0 || indexPtr + indexCount * 2 > fileData.Length) return null;
 
-        // Vertex data starts with a u32 byte-size prefix that should equal
-        // vertexCount * 16. Treat any mismatch as "this isn't the format".
+        // u32 byte-size prefix sanity-checks the format.
         var sizePrefix = DataUtil.GetLeInt(fileData, vertexPtr);
         if (sizePrefix != vertexCount * 16) return null;
 
@@ -111,10 +95,8 @@ public static class XboxMeshDecoder
         var idxOff = DataUtil.GetLeInt(data, 0x1C);
         var vertCount = DataUtil.GetLeInt(data, 0x20);
 
-        // The u32 at dataOff is the vertex-stream byte size; vertices follow
-        // immediately. Stride varies — 32 bytes for non-skinned, 38 for at
-        // least one skinned variant. Derive it from the file size; the first
-        // 16 bytes (pos+normal+UV) we care about are at the same offsets.
+        // u32 at dataOff is the vertex-stream byte size; vertices follow.
+        // Stride (16/32/38) is derived from the trailing byte count.
         var vertStreamStart = dataOff + 4;
         var streamBytes = data.Length - vertStreamStart;
         if (vertCount == 0 || streamBytes <= 0 || streamBytes % vertCount != 0) return meshes;
@@ -129,7 +111,21 @@ public static class XboxMeshDecoder
         DecodeVertexStream(data, vertStreamStart, vertCount, stride,
             texturePixelWidth, texturePixelHeight, positions, normals, uvs);
 
+        // Engine draws the mesh in two batches with two palettes: primary at
+        // +0x24 for indices [0, split), secondary at +0x64 (overlays primary,
+        // 0xFF slots keep primary's value) for indices [split, end).
+        const int primaryPaletteOffset = 0x24;
+        const int secondaryPaletteOffset = 0x64;
+        const int paletteSlots = 64;
         var indexCount = (dataOff - idxOff) / 2;
+        var splitIndex = ComputeBatchSplit(data, idxOff, indexCount);
+        var perVertexUsesSecondary = ClassifyVerticesByBatch(
+            data, idxOff, indexCount, vertCount, splitIndex);
+
+        DecodeSkinning(data, vertStreamStart, vertCount, stride, weights,
+            primaryPaletteOffset, secondaryPaletteOffset, paletteSlots,
+            perVertexUsesSecondary);
+
         var triangleIndices = WalkTriangleStrip(data, idxOff, indexCount, vertCount);
         AlignWindingToNormals(triangleIndices, positions, normals);
 
@@ -137,8 +133,107 @@ public static class XboxMeshDecoder
         return meshes;
     }
 
-    // The first 16 bytes of every Xbox vertex are pos.int16[3] / normal.int16[3] /
-    // uv.int16[2]; only the trailing per-stride bytes (skinning, etc.) vary.
+    // Split point in the index buffer between the primary and secondary draw
+    // batches. v47 = byte at +0x12; the (v47+1)-th u32 in the strip table at
+    // +0xAC is the first index of the secondary batch.
+    private static int ComputeBatchSplit(ReadOnlySpan<byte> data, int idxOff, int indexCount)
+    {
+        var primaryStripCount = data[0x12];
+        var splitEntryOffset = 0xAC + 4 * (primaryStripCount + 1);
+        if (splitEntryOffset < 0 || splitEntryOffset + 4 > idxOff) return indexCount;
+        var split = DataUtil.GetLeInt(data, splitEntryOffset);
+        if (split < 0 || split > indexCount) return indexCount;
+        return split;
+    }
+
+    // Mark each vertex as secondary-only when no primary index references it.
+    // Shared verts stay primary since the engine draws primary first.
+    private static bool[] ClassifyVerticesByBatch(
+        ReadOnlySpan<byte> data, int idxOff, int indexCount, int vertCount, int splitIndex)
+    {
+        var usesSecondary = new bool[vertCount];
+        if (splitIndex >= indexCount) return usesSecondary;
+        var primaryHits = new bool[vertCount];
+        for (var i = 0; i < indexCount; i++)
+        {
+            int idx = data[idxOff + i * 2] | (data[idxOff + i * 2 + 1] << 8);
+            if (idx >= vertCount) continue;
+            if (i < splitIndex) primaryHits[idx] = true;
+            else if (!primaryHits[idx]) usesSecondary[idx] = true;
+        }
+        return usesSecondary;
+    }
+
+    // Emit one VertexWeight per vertex from the skinning lane (v1, +16..+31).
+    // Stride < 32 has no skinning lane (world meshes), leaving the list empty.
+    private static void DecodeSkinning(ReadOnlySpan<byte> data, int streamStart,
+        int vertCount, int stride, List<VertexWeight> weights,
+        int primaryPaletteOffset, int secondaryPaletteOffset, int paletteSlots,
+        bool[] perVertexUsesSecondary)
+    {
+        if (stride < 32) return;
+        weights.Capacity = vertCount;
+        for (var i = 0; i < vertCount; i++)
+        {
+            var p = streamStart + i * stride;
+            var f0 = ReadFloat(data, p + 16);
+            var f1 = ReadFloat(data, p + 20);
+            var f2 = ReadFloat(data, p + 24);
+            var f3 = ReadFloat(data, p + 28);
+
+            var useSecondary = perVertexUsesSecondary[i];
+            VertexWeight vw = new()
+            {
+                startVertex = i,
+                endVertex = i,
+                bone1 = LookupPalette(data, primaryPaletteOffset, secondaryPaletteOffset,
+                    paletteSlots, f0, useSecondary),
+                // Conversions.CreateModel3D normalizes weight1/(weight1+weight2),
+                // so the scale just needs to match the PS2 0..255 convention.
+                boneWeight1 = (int)Math.Round(f1 * 255.0),
+                bone3 = 0xFF,
+                bone4 = 0xFF,
+            };
+            if (f3 > 0.0)
+            {
+                vw.bone2 = LookupPalette(data, primaryPaletteOffset, secondaryPaletteOffset,
+                    paletteSlots, f2, useSecondary);
+                vw.boneWeight2 = (int)Math.Round(f3 * 255.0);
+            }
+            else
+            {
+                // Conversions.cs branches on bone2 == 0xFF for single-bone.
+                vw.bone2 = 0xFF;
+                vw.boneWeight2 = 0;
+            }
+            weights.Add(vw);
+        }
+    }
+
+    // Resolve a palette slot to a skeleton bone. Secondary-batch verts read
+    // the overlay; 0xFF overlay slots fall through to primary (the engine
+    // doesn't re-upload them, so primary's matrix stays live).
+    private static int LookupPalette(ReadOnlySpan<byte> data,
+        int primaryPaletteOffset, int secondaryPaletteOffset, int paletteSlots,
+        float slotTimesFour, bool useSecondary)
+    {
+        var slot = (int)Math.Round(slotTimesFour / 4.0);
+        if (slot < 0 || slot >= paletteSlots) return 0;
+        if (useSecondary)
+        {
+            var overlay = data[secondaryPaletteOffset + slot];
+            if (overlay != 0xFF) return overlay;
+        }
+        var bone = data[primaryPaletteOffset + slot];
+        // Bone 0 (root) fallback avoids emitting the 0xFF bone2-sentinel.
+        return bone == 0xFF ? 0 : bone;
+    }
+
+    private static float ReadFloat(ReadOnlySpan<byte> data, int off)
+        => BitConverter.Int32BitsToSingle(
+            data[off] | (data[off + 1] << 8) | (data[off + 2] << 16) | (data[off + 3] << 24));
+
+    // Pos/normal/uv occupy the same first 16 bytes regardless of stride.
     private static void DecodeVertexStream(
         ReadOnlySpan<byte> data, int streamStart, int vertCount, int stride,
         int texturePixelWidth, int texturePixelHeight,
@@ -163,10 +258,8 @@ public static class XboxMeshDecoder
         }
     }
 
-    // Strips often have inconsistent winding across sub-strip bridges (the
-    // artists' bridges don't always preserve parity). Per-vertex normals ARE
-    // consistent, so flip any triangle whose face normal opposes its average
-    // vertex normal.
+    // Sub-strip bridges don't always preserve winding parity; flip any
+    // triangle whose face normal opposes its average vertex normal.
     private static void AlignWindingToNormals(List<int> tris, IList<Point3D> positions, IList<Vector3D> normals)
     {
         for (var t = 0; t + 2 < tris.Count; t += 3)
@@ -183,12 +276,8 @@ public static class XboxMeshDecoder
         }
     }
 
-    /// <summary>
-    /// UVs are stored as <c>pixel * scale</c>, where <c>scale</c> is the
-    /// largest power of 2 such that <c>dim * scale &lt;= 32768</c>. This is
-    /// per axis: a 320×256 texture has uDiv=20480 and vDiv=32768, so the same
-    /// raw int16 means very different normalized UVs depending on dimension.
-    /// </summary>
+    // UVs are stored per axis as pixel * scale, where scale is the largest
+    // power of 2 such that dim * scale <= 32768.
     private static double UvDivisor(int dim)
     {
         if (dim <= 0) return 32768.0;
@@ -197,12 +286,8 @@ public static class XboxMeshDecoder
         return scale * (double)dim;
     }
 
-    // Single triangle strip with degenerate-triangle bridges between
-    // sub-strips. Winding alternates within each sub-strip, but the
-    // bridges break the global parity: counting parity in *sub-strip-local*
-    // terms (i.e., reset on each degenerate) is what keeps every sub-strip's
-    // first real triangle at "even" winding, matching how the artists built
-    // the strips.
+    // Winding parity is sub-strip-local: reset on each degenerate-triangle
+    // bridge so every sub-strip's first real triangle is at even winding.
     private static List<int> WalkTriangleStrip(ReadOnlySpan<byte> data, int indexPtr, int indexCount, int vertexCount)
     {
         var result = new List<int>();
