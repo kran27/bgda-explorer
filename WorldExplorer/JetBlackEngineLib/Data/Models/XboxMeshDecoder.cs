@@ -10,8 +10,10 @@ namespace JetBlackEngineLib.Data.Models;
 /// Header:
 ///   +0x10  byte  flags (bit 0x20 = stride 38; other bits = blend modes)
 ///   +0x12  byte  primary-batch strip count (drives the palette split)
-///   +0x13  byte  0xFF sentinel
-///   +0x14  u32   zero pad
+///   +0x13  byte  variant byte — usually 0xFF, but legitimate skinned meshes
+///                also use 0x00, 0x01, 0x03, 0x08, 0x16. Not a discriminator.
+///   +0x14  u32   zero pad — this IS the PS2-vs-Xbox discriminator (PS2 VIF
+///                always has nonzero data here)
 ///   +0x18  u32   data-section offset; u32 there is vertex-stream byte size,
 ///                vertices follow immediately
 ///   +0x1C  u32   index-buffer start offset
@@ -38,8 +40,6 @@ public static class XboxMeshDecoder
     public static bool LooksLikeXboxMesh(ReadOnlySpan<byte> data)
     {
         if (data.Length < 0x40) return false;
-        // Discriminators against PS2 VIF.
-        if (data[0x13] != 0xFF) return false;
         if (DataUtil.GetLeInt(data, 0x14) != 0) return false;
         var dataOff = DataUtil.GetLeInt(data, 0x18);
         if (dataOff <= 0x20 || dataOff >= data.Length) return false;
