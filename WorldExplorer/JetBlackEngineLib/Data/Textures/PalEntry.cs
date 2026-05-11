@@ -23,13 +23,26 @@ public class PalEntry
     public byte G;
     public byte R;
 
+    /// <summary>
+    /// When true, every decoded pixel is forced to alpha 0xFF. Toggled by the
+    /// "Force opaque textures" setting; applies to both PS2 and Xbox paths.
+    /// </summary>
+    public static bool ForceOpaque;
+
     public int Argb()
     {
-        var argb = ((A is 0x80 or 0 ? 0 : 0xFF) << 24) |
-                   ((R << 16) & 0xFF0000) |
-                   ((G << 8) & 0xFF00) |
-                   (B & 0xFF);
-        return argb;
+        // PS2 palette alpha is 0..0x80 where 0x80 is the engine's "fully
+        // transparent" sentinel (used as a colorkey on HUD cutouts) and
+        // 0x00..0x7F is the visible opacity ramp. Expand 0..0x7F into the
+        // standard 0..0xFF range so semi-transparent pixels look right.
+        byte alpha;
+        if (ForceOpaque) alpha = 0xFF;
+        else if (A == 0x80) alpha = 0;
+        else alpha = (byte)Math.Min(A * 2, 0xFF);
+        return (alpha << 24) |
+               ((R << 16) & 0xFF0000) |
+               ((G << 8) & 0xFF00) |
+               (B & 0xFF);
     }
 
     /// <summary>
@@ -37,7 +50,8 @@ public class PalEntry
     /// </summary>
     public int ArgbDirect()
     {
-        return (A << 24) |
+        var alpha = ForceOpaque ? (byte)0xFF : A;
+        return (alpha << 24) |
                ((R << 16) & 0xFF0000) |
                ((G << 8) & 0xFF00) |
                (B & 0xFF);

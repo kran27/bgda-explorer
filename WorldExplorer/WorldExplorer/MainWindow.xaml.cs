@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         SetupViewports();
 
         App.LoadSettings();
+        JetBlackEngineLib.Data.Textures.PalEntry.ForceOpaque = App.Settings.Get("Textures.ForceOpaque", false);
 
         _fileTreeMenu = new FileTreeViewContextManager(this, treeView);
         ViewModel = new MainWindowViewModel(this, App.Settings.Get("Files.DataPath", "") ?? "");
