@@ -100,6 +100,14 @@ public class ModelViewModel : BaseViewModel
 
     public WriteableBitmap? Texture { get; set; }
 
+    /// <summary>
+    /// Composite parts (per-mesh + per-texture) for DDF entities. Null when
+    /// a single mesh is loaded. Exposed so the export path can emit one
+    /// material per part instead of merging everything under a single
+    /// (possibly null) <see cref="Texture"/>.
+    /// </summary>
+    public IList<(Model vif, BitmapSource? texture)>? Parts => _parts;
+
     public Model? VifModel
     {
         get => _vifModel;
@@ -343,6 +351,16 @@ public class ModelViewModel : BaseViewModel
         }
 
         var ext = Path.GetExtension(dialog.FileName).ToUpperInvariant();
+
+        // Composite DDF entities have per-part textures that the single
+        // `Texture` property doesn't carry. Route them through the parts-aware
+        // GLTF path so each mesh keeps its own material.
+        if (ext == ".GLTF" && Parts != null)
+        {
+            new VifGltfExporter().SavePartsToFile(dialog.FileName, Parts, AnimData, CurrentFrame, 1.0);
+            return;
+        }
+
         IVifExporter? exporter = ext switch
         {
             ".OBJ" => new VifObjExporter(),
