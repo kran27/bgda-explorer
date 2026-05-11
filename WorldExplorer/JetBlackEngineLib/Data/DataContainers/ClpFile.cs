@@ -34,9 +34,10 @@ namespace JetBlackEngineLib.Data.DataContainers;
 /// a 32-byte name table, etc.). The data is *scattered* through the data area
 /// — not laid out in directory order — and the per-entry offset comes from
 /// the <c>dataOffsetSectors</c> field. There is no per-entry filename anywhere
-/// in the archive — entries are addressed by hash. We label them
-/// <c>slotNNN_HASH.ext</c>, where the extension comes from
-/// <see cref="RoleResolver"/> (DDF-derived) or content sniffing.
+/// in the archive — entries are addressed by hash. We label them with the
+/// engine filename (when known from the BoS name table), or fall back to
+/// <c>HASH.ext</c> where the extension comes from <see cref="RoleResolver"/>
+/// (DDF-derived) or content sniffing.
 /// </summary>
 public class ClpFile : LmpFile
 {
@@ -194,14 +195,12 @@ public class ClpFile : LmpFile
         // + … all reuse one mesh+tex); attributing one entity name is
         // misleading. The engine filename, when known, is unique to the file.
         var engineName = BosNameTable.Get(hash);
-        string label = engineName != null
-            ? $"slot{slot:D3}_{engineName}"
-            : $"slot{slot:D3}_{embeddedName ?? hash.ToString("X8")}{ext}";
+        string label = engineName ?? $"{embeddedName ?? hash.ToString("X8")}{ext}";
         if (Directory.ContainsKey(label))
         {
             label = engineName != null
-                ? $"slot{slot:D3}_{engineName}_{hash:X8}"
-                : $"slot{slot:D3}_{embeddedName ?? hash.ToString("X8")}_{hash:X8}{ext}";
+                ? $"{engineName}_{hash:X8}"
+                : $"{embeddedName ?? hash.ToString("X8")}_{hash:X8}{ext}";
         }
         Directory[label] = new EntryInfo(label, start, length);
         _hashByLabel[label] = hash;

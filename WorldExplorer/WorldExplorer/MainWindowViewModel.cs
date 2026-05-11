@@ -570,12 +570,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private static string? ExtractEntityToken(string label)
     {
-        // Labels are "slotNNN_<entity>.<ext>" (the entity may contain '_').
         var dot = label.LastIndexOf('.');
-        var trimmed = dot > 0 ? label.Substring(0, dot) : label;
-        var firstUnderscore = trimmed.IndexOf('_');
-        if (firstUnderscore < 0 || firstUnderscore + 1 >= trimmed.Length) return null;
-        return trimmed.Substring(firstUnderscore + 1);
+        return dot > 0 ? label.Substring(0, dot) : label;
     }
 
     private void OnSdbSelected(SdbTreeViewModel node)
