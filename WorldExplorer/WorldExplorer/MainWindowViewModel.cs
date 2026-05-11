@@ -246,21 +246,25 @@ public class MainWindowViewModel : INotifyPropertyChanged
             try
             {
                 BitmapSource? texture = null;
-                // Prefer this entity's specific pairing — same mesh hash can
-                // appear in multiple entities with different paired textures
-                // (cyrus skins, bottle-cap variants, etc.). The DDF parser
-                // stores PairedHash on the texture asset (texture → mesh),
-                // not the mesh, so we look for the texture in this entity
-                // whose PairedHash points back at this mesh.
+                // Same mesh hash can appear in multiple entities with
+                // different paired textures (cyrus skins, bottle-cap
+                // variants, etc.), so prefer the per-entity pairing the
+                // DDF parser already recorded. The parser stores it in two
+                // directions depending on category: cat-12 (debris) puts
+                // the shared-texture hash on the mesh asset; other
+                // categories put the mesh hash on the texture asset.
                 LmpFile.EntryInfo? pairedTex = null;
                 LmpFile pairedTexClp = clp;
-                uint? entityPairedTexHash = null;
-                foreach (var other in entity.Assets)
+                uint? entityPairedTexHash = asset.PairedHash;
+                if (entityPairedTexHash == null)
                 {
-                    if (other.Role != DdfFile.AssetRole.Texture) continue;
-                    if (other.PairedHash != asset.Hash) continue;
-                    entityPairedTexHash = other.Hash;
-                    break;
+                    foreach (var other in entity.Assets)
+                    {
+                        if (other.Role != DdfFile.AssetRole.Texture) continue;
+                        if (other.PairedHash != asset.Hash) continue;
+                        entityPairedTexHash = other.Hash;
+                        break;
+                    }
                 }
                 if (entityPairedTexHash is uint pairedHash
                     && World.AssetIndex.TryGetValue(pairedHash, out var texLoc)
